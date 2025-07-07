@@ -3,5 +3,5 @@ import 'package:profile_test_isp/pages/ProfilePage.dart';
 import 'pages/LoadingPage.dart';
 
 void main() {
-  runApp(EditProfileApp());
+  runApp(MyApp());
 }
