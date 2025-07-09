@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'ItineraryBookingPage.dart';
-import '../models/ItineraryDetailModel.dart'; // Contains DetailPlan and Review
+import 'ItineraryDetailModel.dart'; // Contains DetailPlan and Review
 
 class ItineraryDetailPage extends StatefulWidget {
   final String attraction;
