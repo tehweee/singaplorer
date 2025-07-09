@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'HotelDetailModel.dart';
+import '../models/HotelDetailModel.dart';
 
 class HotelDetailPage extends StatefulWidget {
   final String hotelID;

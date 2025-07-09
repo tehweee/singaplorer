@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:tetsing_flutter_nodejs_connection_3/HotelDetailPage.dart';
-import 'HotelModel.dart'; // Make sure this file contains the Hotel model
+import 'HotelDetailPage.dart';
+import '../models/HotelModel.dart'; // Make sure this file contains the Hotel model
 
 class HotelPage extends StatefulWidget {
   const HotelPage({Key? key}) : super(key: key);

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:testing_flutter_nodejs_connection_4/ItineraryDetailPage.dart';
-import 'ItineraryModel.dart'; // Make sure your model.dart file is correct
+import 'ItineraryDetailPage.dart';
+import '../models/ItineraryModel.dart'; // Make sure your model.dart file is correct
 
 
 class ItineraryPage extends StatefulWidget {
