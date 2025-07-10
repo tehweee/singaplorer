@@ -225,7 +225,8 @@ Please update or respond accordingly.
       debugPrint("Gemini full response:\n${fullResponse.replaceAll('\n', ' ')}");
 
       // Send the full response to Node.js API
-      await sendAIChatToServer(fullResponse);
+      Navigator.pushReplacement(context, MaterialPageRoute(
+                          builder: (context) => SaveItinerary(fullResponse));) 
 
       final botReply = ChatMessage(
         user: geminiUser,
