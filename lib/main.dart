@@ -9,5 +9,5 @@ import 'pages/StartPage.dart';
 
 void main() {
   Gemini.init(apiKey: GEMINI_API_KEY);
-  runApp(MaterialApp(home: AIChatPage()));
+  runApp(MaterialApp(home: StartPage()));
 }
