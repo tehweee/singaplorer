@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:profile_test_isp/pages/HomePage.dart';
 import 'LoginPage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -54,6 +56,36 @@ class _SignUpPageState extends State<SignUpPage>
     super.dispose();
   }
 
+  Future<void> _submitSignUpForm() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final url = Uri.parse('http://10.0.2.2:3000/api/add/users');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': _emailController.text.trim(),
+        'username': _usernameController.text.trim(),
+        'password': _passwordController.text,
+      }),
+    );
+
+    setState(() => _isLoading = false);
+
+    if (response.statusCode == 200) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Signup failed: ${response.body}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +98,6 @@ class _SignUpPageState extends State<SignUpPage>
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Header with back button
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
@@ -94,10 +125,7 @@ class _SignUpPageState extends State<SignUpPage>
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // White content area with curved top
                   Container(
                     width: double.infinity,
                     constraints: BoxConstraints(
@@ -118,7 +146,6 @@ class _SignUpPageState extends State<SignUpPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 20),
-                            // Welcome text
                             const Text(
                               'Hey Explorer,\nJoin Us Now!',
                               style: TextStyle(
@@ -137,46 +164,44 @@ class _SignUpPageState extends State<SignUpPage>
                               ),
                             ),
                             const SizedBox(height: 24),
-
-                            // Mascot character
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [_buildMascotImage()],
                             ),
                             const SizedBox(height: 24),
-
-                            // Form fields
                             _buildTextField(
                               controller: _emailController,
                               hintText: 'Enter your email',
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty)
                                   return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
+                                final emailRegex = RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                );
+                                if (!emailRegex.hasMatch(value.trim()))
+                                  return 'Enter a valid email address';
                                 return null;
                               },
                             ),
                             const SizedBox(height: 16),
-
                             _buildTextField(
                               controller: _usernameController,
                               hintText: 'Username',
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty)
                                   return 'Please enter a username';
-                                }
-                                if (value.length < 3) {
+                                if (value.trim().length < 3)
                                   return 'Username must be at least 3 characters';
-                                }
+                                final usernameRegex = RegExp(
+                                  r'^[a-zA-Z0-9_]+$',
+                                );
+                                if (!usernameRegex.hasMatch(value.trim()))
+                                  return 'Only letters, numbers, and underscores allowed';
                                 return null;
                               },
                             ),
                             const SizedBox(height: 16),
-
                             _buildTextField(
                               controller: _passwordController,
                               hintText: 'Password',
@@ -198,14 +223,19 @@ class _SignUpPageState extends State<SignUpPage>
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter a password';
                                 }
-                                if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
+
+                                final passwordRegex = RegExp(
+                                  r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{6,}$',
+                                );
+
+                                if (!passwordRegex.hasMatch(value)) {
+                                  return 'Password must include upper, lower, number & symbol';
                                 }
+
                                 return null;
                               },
                             ),
                             const SizedBox(height: 16),
-
                             _buildTextField(
                               controller: _confirmPasswordController,
                               hintText: 'Confirm Password',
@@ -225,62 +255,20 @@ class _SignUpPageState extends State<SignUpPage>
                                 },
                               ),
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.isEmpty)
                                   return 'Please confirm your password';
-                                }
-                                if (value != _passwordController.text) {
+                                if (value != _passwordController.text)
                                   return 'Passwords do not match';
-                                }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 24),
-
-                            // Sign Up button
                             _buildActionButton(
                               text: 'Sign Up',
-                              onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => const HomePage(),
-                                    transitionsBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                          child,
-                                        ) {
-                                          return SlideTransition(
-                                            position:
-                                                Tween<Offset>(
-                                                  begin: const Offset(1.0, 0.0),
-                                                  end: Offset.zero,
-                                                ).animate(
-                                                  CurvedAnimation(
-                                                    parent: animation,
-                                                    curve: Curves.easeInOut,
-                                                  ),
-                                                ),
-                                            child: child,
-                                          );
-                                        },
-                                    transitionDuration: const Duration(
-                                      milliseconds: 300,
-                                    ),
-                                  ),
-                                );
-                              },
+                              onPressed: _submitSignUpForm,
                               isLoading: _isLoading,
                             ),
                             const SizedBox(height: 16),
-
-                            // Login link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -301,8 +289,6 @@ class _SignUpPageState extends State<SignUpPage>
                               ],
                             ),
                             const SizedBox(height: 16),
-
-                            // Terms and conditions
                             const Center(
                               child: Text(
                                 'By signing up, you agree to our Terms of Service\nand Privacy Policy',
@@ -404,7 +390,6 @@ class _SignUpPageState extends State<SignUpPage>
     );
   }
 
-  // Updated to use the mascot image
   Widget _buildMascotImage() {
     return SizedBox(
       width: 100,
@@ -413,7 +398,6 @@ class _SignUpPageState extends State<SignUpPage>
         'images/mascot.png',
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
-          // Fallback if image is not found
           return Container(
             width: 100,
             height: 100,
@@ -447,74 +431,6 @@ class _SignUpPageState extends State<SignUpPage>
           );
         },
         transitionDuration: const Duration(milliseconds: 300),
-      ),
-    );
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 50),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Welcome to Singaplorer!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFD32F2F),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Hi ${_usernameController.text}! Your account has been created successfully.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/home', // Changed from '/smart_flow' to '/home'
-                      (route) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD32F2F),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    'Start Exploring',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
