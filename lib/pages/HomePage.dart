@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'AIChatPage.dart';
+import 'DepartureFlightPage.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -33,6 +36,7 @@ class _HomePageState extends State<HomePage> {
               child: CircularProgressIndicator(color: Color(0xFFAA0000)),
             )
           : SafeArea(
+              top: false,
               child: Column(
                 children: [
                   // Top section with profile and search
@@ -45,6 +49,8 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 30),
+
                         Row(
                           children: [
                             // Profile circle
@@ -62,42 +68,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             const SizedBox(width: 12),
-
-                            // Search bar
-                            Expanded(
-                              child: Container(
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Search',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.search,
-                                        color: Colors.grey,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -146,18 +116,34 @@ class _HomePageState extends State<HomePage> {
                                 _buildMenuOption(
                                   icon: Icons.flight_takeoff,
                                   label: 'Plan Now',
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                DepartureFlightPage()));
+                                  },
                                 ),
                                 _buildMenuOption(
                                   icon: Icons.auto_awesome,
                                   label: 'AI Plan',
+                                  onTap: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                AIChatPage()));
+                                  },
                                 ),
                                 _buildMenuOption(
                                   icon: Icons.map,
                                   label: 'Maps',
+                                  onTap: () {},
                                 ),
                                 _buildMenuOption(
                                   icon: Icons.visibility,
                                   label: 'View Plans',
+                                  onTap: () {},
                                 ),
                               ],
                             ),
@@ -165,60 +151,69 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(height: 24),
 
                             // AI Planner Card
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: const Color(0xFFAA0000),
-                                  width: 2,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => AIChatPage()),
+                                );
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFAA0000),
+                                    width: 2,
+                                  ),
                                 ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      child: Icon(
-                                        Icons.flight,
-                                        color: const Color(0xFFAA0000),
-                                        size: 40,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        child: Icon(
+                                          Icons.flight,
+                                          color: const Color(0xFFAA0000),
+                                          size: 40,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: const [
-                                          Text(
-                                            'Explore Our AI Powered',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFFAA0000),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: const [
+                                            Text(
+                                              'Explore Our AI Powered',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFFAA0000),
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            'Itinerary Planner!',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFFAA0000),
+                                            Text(
+                                              'Itinerary Planner!',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFFAA0000),
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios,
-                                      color: Color(0xFFAA0000),
-                                      size: 20,
-                                    ),
-                                  ],
+                                      const Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Color(0xFFAA0000),
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -275,6 +270,8 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFFAA0000),
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white70,
+        showSelectedLabels: false, // ✅ Hides selected label
+        showUnselectedLabels: false,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
@@ -288,17 +285,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMenuOption({required IconData icon, required String label}) {
+  Widget _buildMenuOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return Column(
       children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: const BoxDecoration(
-            color: Colors.grey,
-            shape: BoxShape.circle,
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: const BoxDecoration(
+              color: Colors.grey,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 30),
           ),
-          child: Icon(icon, color: Colors.white, size: 30),
         ),
         const SizedBox(height: 8),
         Text(
