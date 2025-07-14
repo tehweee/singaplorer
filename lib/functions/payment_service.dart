@@ -5,12 +5,23 @@
 
 // enum PaymentResult { success, cancelled, failed, unknownError }
 
+<<<<<<< Updated upstream
 // Future<PaymentResult> makePayment() async {
 //   try {
 //     //  Fetch Payment Intent Client Secret from backend
 //     final url = Uri.parse('http://10.0.2.2:3000/create-payment-intent');
 
 //     const priceId = priceAIToken; // Replace with price ID
+=======
+Future<PaymentResult> makePayment([String? priceIDparse]) async {
+  try {
+    //  Fetch Payment Intent Client Secret from backend
+    final url = Uri.parse('http://10.0.2.2:3000/create-payment-intent');
+
+    String? priceId = priceIDparse;
+
+    priceId ??= priceAIToken; // Replace with price ID
+>>>>>>> Stashed changes
 
 //     // Call backend to create a payment intent with the price ID
 //     final response = await http.post(
