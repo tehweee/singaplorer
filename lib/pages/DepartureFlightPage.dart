@@ -16,7 +16,7 @@ class _DepartureFlightPageState extends State<DepartureFlightPage> {
 
   final _fromController = TextEditingController(text: 'SIN.AIRPORT');
   final _toController = TextEditingController(text: 'LHR.AIRPORT');
-  final _departController = TextEditingController(text: '2025-06-25');
+  final _departController = TextEditingController(text: '2025-07-16');
 
   String _selectedCabin = 'ECONOMY';
   String _selectedSort = 'BEST';
@@ -25,7 +25,7 @@ class _DepartureFlightPageState extends State<DepartureFlightPage> {
     'ECONOMY',
     'PREMIUM_ECONOMY',
     'BUSINESS',
-    'FIRST'
+    'FIRST',
   ];
 
   final List<String> _sortOptions = ['BEST', 'CHEAPEST', 'FASTEST'];
@@ -73,118 +73,137 @@ class _DepartureFlightPageState extends State<DepartureFlightPage> {
       appBar: AppBar(title: Text('Search Flights')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(children: [
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _toController,
-                decoration:
-                    InputDecoration(labelText: 'To (e.g. LHR.AIRPORT)'),
-              ),
-            ),
-            SizedBox(width: 10),
-          ]),
-          TextField(
-            controller: _departController,
-            decoration: InputDecoration(labelText: 'Departure (YYYY-MM-DD)'),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedCabin,
-                  items: _cabinOptions
-                      .map((cabin) =>
-                          DropdownMenuItem(value: cabin, child: Text(cabin)))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCabin = value!;
-                    });
-                  },
-                  decoration: InputDecoration(labelText: 'Cabin Class'),
-                ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _selectedSort,
-                  items: _sortOptions
-                      .map((sort) =>
-                          DropdownMenuItem(value: sort, child: Text(sort)))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSort = value!;
-                    });
-                  },
-                  decoration: InputDecoration(labelText: 'Sort By'),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _fetchFlights,
-            child: Text('Search Flights'),
-          ),
-          Expanded(
-            child: _flights.isEmpty
-                ? Center(child: Text('No flights found'))
-                : ListView.builder(
-  itemCount: _flights.length,
-  itemBuilder: (context, index) {
-    final flight = _flights[index];
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${flight.airline} - \$${flight.price}', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 4),
-            Text('${flight.from} → ${flight.to}'),
-            Text('${flight.departTime} ➜ ${flight.arriveTime}'),
-            SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DepartureFlightDetailPage(flightDetail: flight.token),
-                  ),
-                );
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('Flight Booked!'),
-                      content: Text(
-                          'You booked a return flight with ${flight.airline} from ${flight.from} to ${flight.to}.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('OK'),
-                        ),
-                      ],
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _toController,
+                    decoration: InputDecoration(
+                      labelText: 'To (e.g. LHR.AIRPORT)',
                     ),
-                  );
-                },
-                child: Text('Book'),
-              ),
+                  ),
+                ),
+                SizedBox(width: 10),
+              ],
+            ),
+            TextField(
+              controller: _departController,
+              decoration: InputDecoration(labelText: 'Departure (YYYY-MM-DD)'),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedCabin,
+                    items: _cabinOptions
+                        .map(
+                          (cabin) => DropdownMenuItem(
+                            value: cabin,
+                            child: Text(cabin),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCabin = value!;
+                      });
+                    },
+                    decoration: InputDecoration(labelText: 'Cabin Class'),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedSort,
+                    items: _sortOptions
+                        .map(
+                          (sort) =>
+                              DropdownMenuItem(value: sort, child: Text(sort)),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSort = value!;
+                      });
+                    },
+                    decoration: InputDecoration(labelText: 'Sort By'),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _fetchFlights,
+              child: Text('Search Flights'),
+            ),
+            Expanded(
+              child: _flights.isEmpty
+                  ? Center(child: Text('No flights found'))
+                  : ListView.builder(
+                      itemCount: _flights.length,
+                      itemBuilder: (context, index) {
+                        final flight = _flights[index];
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${flight.airline} - \$${flight.price}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 4),
+                                Text('${flight.from} → ${flight.to}'),
+                                Text(
+                                  '${flight.departTime} ➜ ${flight.arriveTime}',
+                                ),
+                                SizedBox(height: 10),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              DepartureFlightDetailPage(
+                                                flightDetail: flight.token,
+                                              ),
+                                        ),
+                                      );
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text('Flight Booked!'),
+                                          content: Text(
+                                            'You booked a return flight with ${flight.airline} from ${flight.from} to ${flight.to}.',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: Text('OK'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    child: Text('Book'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
-      ),
-    );
-  },
-),
-
-          ),
-         
-        ]),
       ),
     );
   }

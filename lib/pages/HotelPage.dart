@@ -14,8 +14,8 @@ class HotelPage extends StatefulWidget {
 class _HotelPageState extends State<HotelPage> {
   List<Hotel> _hotel = [];
 
-  final _arrivalController = TextEditingController(text: '2025-07-12');
-  final _departController = TextEditingController(text: '2025-07-13');
+  final _arrivalController = TextEditingController(text: '2025-07-20');
+  final _departController = TextEditingController(text: '2025-07-21');
   final _minPriceController = TextEditingController(text: '0');
   final _maxPriceController = TextEditingController(text: '100');
 
@@ -61,68 +61,75 @@ class _HotelPageState extends State<HotelPage> {
       appBar: AppBar(title: Text('Search Hotels')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Column(children: [
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _arrivalController,
-                decoration: InputDecoration(labelText: 'Arrival'),
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _departController,
-                decoration: InputDecoration(labelText: 'Departure'),
-              ),
-            ),
-          ]),
-          TextField(
-            controller: _minPriceController,
-            decoration: InputDecoration(labelText: 'Min Price'),
-          ),
-          TextField(
-            controller: _maxPriceController,
-            decoration: InputDecoration(labelText: 'Max Price'),
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _fetchHotels,
-            child: Text('Search Hotels'),
-          ),
-          Expanded(
-            child: _hotel.isEmpty
-                ? Center(child: Text('No hotels found'))
-                : ListView.builder(
-                    itemCount: _hotel.length,
-                    itemBuilder: (context, index) {
-                      final hotel = _hotel[index];
-                      return Card(
-                        margin: EdgeInsets.symmetric(vertical: 8),
-                        child: ListTile(
-                          title: Text('${hotel.name} - ${hotel.priceGross}'),
-                          subtitle: Text(
-                            '${hotel.checkInDate} to ${hotel.checkOutDate}\n${hotel.checkInFrom} ➜ ${hotel.checkOutFrom}',
-                          ),
-                          isThreeLine: true,
-                          trailing: ElevatedButton(
-                            child: Text('Details'),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      HotelDetailPage(hotelID:hotel.hotelID.toString(),arrivalDate:hotel.checkInDate,departureDate:hotel.checkOutDate),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    },
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _arrivalController,
+                    decoration: InputDecoration(labelText: 'Arrival'),
                   ),
-          ),
-        ]),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _departController,
+                    decoration: InputDecoration(labelText: 'Departure'),
+                  ),
+                ),
+              ],
+            ),
+            TextField(
+              controller: _minPriceController,
+              decoration: InputDecoration(labelText: 'Min Price'),
+            ),
+            TextField(
+              controller: _maxPriceController,
+              decoration: InputDecoration(labelText: 'Max Price'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _fetchHotels,
+              child: Text('Search Hotels'),
+            ),
+            Expanded(
+              child: _hotel.isEmpty
+                  ? Center(child: Text('No hotels found'))
+                  : ListView.builder(
+                      itemCount: _hotel.length,
+                      itemBuilder: (context, index) {
+                        final hotel = _hotel[index];
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            title: Text('${hotel.name} - ${hotel.priceGross}'),
+                            subtitle: Text(
+                              '${hotel.checkInDate} to ${hotel.checkOutDate}\n${hotel.checkInFrom} ➜ ${hotel.checkOutFrom}',
+                            ),
+                            isThreeLine: true,
+                            trailing: ElevatedButton(
+                              child: Text('Details'),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => HotelDetailPage(
+                                      hotelID: hotel.hotelID.toString(),
+                                      arrivalDate: hotel.checkInDate,
+                                      departureDate: hotel.checkOutDate,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -142,8 +149,10 @@ class HotelDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hotel Name: ${hotel.name}',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              'Hotel Name: ${hotel.name}',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 10),
             Text('Price: ${hotel.priceGross}', style: TextStyle(fontSize: 16)),
             SizedBox(height: 10),

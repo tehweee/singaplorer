@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:profile_test_isp/pages/AIChatPage.dart';
+import 'package:profile_test_isp/pages/ArrivalFlightPage.dart';
+import 'package:profile_test_isp/pages/HotelPage.dart';
 import 'package:profile_test_isp/pages/ItineraryPage.dart';
 import 'package:profile_test_isp/pages/ProfilePage.dart';
 import 'package:profile_test_isp/pages/StorePage.dart';
@@ -10,6 +12,7 @@ import 'functions/stripe_constants.dart';
 import 'consts.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'pages/HomePage.dart';
+import 'pages/DepartureFlightPage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,5 +21,5 @@ void main() async {
 
   await Stripe.instance.applySettings();
   Gemini.init(apiKey: GEMINI_API_KEY);
-  runApp(MaterialApp(home: StorePage()));
+  runApp(MaterialApp(home: ArrivalFlightPage()));
 }
