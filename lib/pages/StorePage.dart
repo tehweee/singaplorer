@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'payment_service.dart';
+import '../functions/payment_service.dart';
 
 class StorePage extends StatefulWidget {
   const StorePage({super.key});
