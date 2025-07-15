@@ -28,7 +28,7 @@ class MascotCharacter extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(size * 0.1),
         child: Image.asset(
-          'images/mascot.png', // Updated path
+          'assets/images/mascot.png', // Updated path
           width: size,
           height: size,
           fit: fit,
@@ -50,11 +50,7 @@ class MascotCharacter extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.1),
         border: Border.all(color: Colors.white, width: 3),
       ),
-      child: Icon(
-        Icons.explore,
-        size: size * 0.6,
-        color: Colors.white,
-      ),
+      child: Icon(Icons.explore, size: size * 0.6, color: Colors.white),
     );
   }
 }

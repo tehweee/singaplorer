@@ -13,6 +13,9 @@ import 'consts.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'pages/HomePage.dart';
 import 'pages/DepartureFlightPage.dart';
+import 'pages/StartPage.dart';
+import 'pages/AboutUs.dart';
+import 'pages/AboutPage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,5 +24,5 @@ void main() async {
 
   await Stripe.instance.applySettings();
   Gemini.init(apiKey: GEMINI_API_KEY);
-  runApp(MaterialApp(home: ArrivalFlightPage()));
+  runApp(MaterialApp(home: StartPage()));
 }

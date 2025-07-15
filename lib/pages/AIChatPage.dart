@@ -106,7 +106,9 @@ class _AIChatPageState extends State<AIChatPage> {
         final key = entry.value;
         String? newValue;
 
-        if (key == _questions[1] || key == _questions[2] || key == _questions[3]) {
+        if (key == _questions[1] ||
+            key == _questions[2] ||
+            key == _questions[3]) {
           final number = extractNumber(userInput);
           if (number != null) {
             newValue = number.toString();
@@ -144,7 +146,8 @@ class _AIChatPageState extends State<AIChatPage> {
   }
 
   void _sendToGemini() {
-    final summary = '''
+    final summary =
+        '''
 I am planning a trip and here are my preferences:
 
 **Category:** ${_answers[_questions[0]]}
@@ -178,18 +181,20 @@ Please update or respond accordingly.
   String generateRandomUserId(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final rand = Random();
-    return List.generate(length, (index) => chars[rand.nextInt(chars.length)]).join();
+    return List.generate(
+      length,
+      (index) => chars[rand.nextInt(chars.length)],
+    ).join();
   }
 
   // Send the AI chat response to your Node.js API
   Future<void> sendAIChatToServer(String aiMessage) async {
     final userId = generateRandomUserId(10);
-    final url = Uri.parse('http://10.0.2.2:3000/api/add/aichat'); // Replace with your API URL
+    final url = Uri.parse(
+      'http://10.0.2.2:3000/api/add/aichat',
+    ); // Replace with your API URL
 
-    final body = jsonEncode({
-      "userID": "6866d8f6804aa5ebc8c8ea34",
-      "aiMessage": aiMessage,
-    });
+    final body = jsonEncode({"aiMessage": aiMessage});
 
     try {
       final response = await http.post(
@@ -201,7 +206,9 @@ Please update or respond accordingly.
       if (response.statusCode == 200) {
         print("Success sending AI chat: ${response.body}");
       } else {
-        print("Failed to send AI chat. Status: ${response.statusCode}, Body: ${response.body}");
+        print(
+          "Failed to send AI chat. Status: ${response.statusCode}, Body: ${response.body}",
+        );
       }
     } catch (e) {
       print("Error sending AI chat to server: $e");
@@ -211,33 +218,43 @@ Please update or respond accordingly.
   void _sendGeminiMessage(String userInput) {
     String buffer = "";
 
-    gemini.promptStream(parts: [Part.text(userInput)]).listen((event) {
-      final chunk = event?.content?.parts?.fold(
-            '',
-            (prev, part) => part is TextPart ? "$prev${part.text}" : prev,
-          ) ?? '';
-      buffer += chunk;
-    }, onDone: () async {
-      final fullResponse = buffer.trim();
+    gemini
+        .promptStream(parts: [Part.text(userInput)])
+        .listen(
+          (event) {
+            final chunk =
+                event?.content?.parts?.fold(
+                  '',
+                  (prev, part) => part is TextPart ? "$prev${part.text}" : prev,
+                ) ??
+                '';
+            buffer += chunk;
+          },
+          onDone: () async {
+            final fullResponse = buffer.trim();
 
-      debugPrint("Gemini full response:\n${fullResponse.replaceAll('\n', ' ')}");
+            debugPrint(
+              "Gemini full response:\n${fullResponse.replaceAll('\n', ' ')}",
+            );
 
-      // Send the full response to Node.js API
-      await sendAIChatToServer(fullResponse);
+            // Send the full response to Node.js API
+            await sendAIChatToServer(fullResponse);
 
-      final botReply = ChatMessage(
-        user: geminiUser,
-        text: fullResponse,
-        createdAt: DateTime.now(),
-        isInitialQuestion: false,
-      );
+            final botReply = ChatMessage(
+              user: geminiUser,
+              text: fullResponse,
+              createdAt: DateTime.now(),
+              isInitialQuestion: false,
+            );
 
-      setState(() {
-        messages.insert(0, botReply);
-      });
-    }, onError: (e) {
-      print("Gemini error: $e");
-    });
+            setState(() {
+              messages.insert(0, botReply);
+            });
+          },
+          onError: (e) {
+            print("Gemini error: $e");
+          },
+        );
   }
 
   Widget _buildMessage(ChatMessage message) {
@@ -252,8 +269,9 @@ Please update or respond accordingly.
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
-        crossAxisAlignment:
-            isAI ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        crossAxisAlignment: isAI
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.end,
         children: [
           isAI ? MarkdownBody(data: message.text) : Text(message.text),
           if (isAI && !message.isInitialQuestion)

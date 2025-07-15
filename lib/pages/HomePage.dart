@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:profile_test_isp/pages/ProfilePage.dart';
+import 'package:profile_test_isp/pages/SummaryPage.dart';
 
 import 'AIChatPage.dart';
 import 'DepartureFlightPage.dart';
+import 'AboutUs.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -54,19 +57,30 @@ class _HomePageState extends State<HomePage> {
                         Row(
                           children: [
                             // Profile circle
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Color(0xFFAA0000),
-                                size: 24,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditProfileScreen(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Color(0xFFAA0000),
+                                  size: 24,
+                                ),
                               ),
                             ),
+
                             const SizedBox(width: 12),
                           ],
                         ),
@@ -118,10 +132,12 @@ class _HomePageState extends State<HomePage> {
                                   label: 'Plan Now',
                                   onTap: () {
                                     Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                DepartureFlightPage()));
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DepartureFlightPage(),
+                                      ),
+                                    );
                                   },
                                 ),
                                 _buildMenuOption(
@@ -129,10 +145,11 @@ class _HomePageState extends State<HomePage> {
                                   label: 'AI Plan',
                                   onTap: () {
                                     Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                AIChatPage()));
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AIChatPage(),
+                                      ),
+                                    );
                                   },
                                 ),
                                 _buildMenuOption(
@@ -143,7 +160,15 @@ class _HomePageState extends State<HomePage> {
                                 _buildMenuOption(
                                   icon: Icons.visibility,
                                   label: 'View Plans',
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AiChatPage(),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -156,7 +181,8 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => AIChatPage()),
+                                    builder: (context) => AIChatPage(),
+                                  ),
                                 );
                               },
                               child: Container(
@@ -261,11 +287,28 @@ class _HomePageState extends State<HomePage> {
             _currentIndex = index;
           });
 
-          // Handle logout if needed
-          if (index == 3) {
-            _showLogoutDialog();
+          switch (index) {
+            case 0:
+              // Stay on home
+              break;
+            case 1:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AboutUsPage()),
+              );
+              break;
+            case 2:
+              // TODO: Navigate to Favourites page
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Favourites coming soon!")),
+              );
+              break;
+            case 3:
+              _showLogoutDialog(); // or replace with Support later
+              break;
           }
         },
+
         type: BottomNavigationBarType.fixed,
         backgroundColor: const Color(0xFFAA0000),
         selectedItemColor: Colors.white,

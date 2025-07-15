@@ -395,7 +395,7 @@ class _SignUpPageState extends State<SignUpPage>
       width: 100,
       height: 100,
       child: Image.asset(
-        'images/mascot.png',
+        'assets/images/mascot.png',
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
           return Container(
