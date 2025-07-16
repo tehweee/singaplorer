@@ -15,14 +15,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<Map<String, dynamic>> fetchUserData() async {
     final uri = Uri.parse(
       "http://10.0.2.2:3000/api/user",
-    ); // Replace with your actual server address
+    ); // Replace with real IP in production
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
       final jsonBody = json.decode(response.body);
-      return (jsonBody is List && jsonBody.isNotEmpty)
-          ? jsonBody[0]
-          : {}; // empty if no user
+      return (jsonBody is Map<String, dynamic>) ? jsonBody : {};
     } else {
       throw Exception("Failed to load user data");
     }
@@ -58,6 +56,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           final name = user['name'] ?? '???';
           final username = user['username'] ?? '???';
           final email = user['email'] ?? '???';
+          final nationality = user['nationality'] ?? 'No Data';
+          final language = user['language'] ?? 'No Data';
+          final preferences =
+              (user['preferences'] is List && user['preferences'].isNotEmpty)
+              ? (user['preferences'] as List).join(', ')
+              : 'No Data';
 
           return Stack(
             children: [
@@ -90,14 +94,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 40),
-                      // ProfileField(label: 'Name:', value: name),
-                      ProfileField(label: 'Username:', value: username),
-                      ProfileField(label: 'Email:', value: email),
-                      const ProfileField(
-                        label: 'Nationality:',
-                        value: 'Singaporean',
-                      ),
-                      const ProfileField(label: 'Language:', value: 'English'),
+                      ProfileField(label: 'Username', value: username),
+                      ProfileField(label: 'Email', value: email),
+                      ProfileField(label: 'Nationality', value: nationality),
+                      ProfileField(label: 'Language', value: language),
                       Align(
                         alignment: Alignment.centerRight,
                         child: Padding(
@@ -108,9 +108,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                         ),
                       ),
-                      const ProfileField(
-                        label: 'Travel Preference:',
-                        value: 'Relax, Food, Nature, Adventure',
+                      ProfileField(
+                        label: 'Travel Preference',
+                        value: preferences,
                       ),
                     ],
                   ),
@@ -147,7 +147,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
         },
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.red,
         selectedItemColor: Colors.white,
@@ -188,7 +187,7 @@ class ProfileField extends StatelessWidget {
           style: const TextStyle(fontSize: 24, color: Colors.black),
           children: [
             TextSpan(
-              text: '$label ',
+              text: '$label: ',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             TextSpan(text: value),
