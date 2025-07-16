@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:profile_test_isp/pages/GoogleMapPage.dart';
 import 'package:profile_test_isp/pages/ProfilePage.dart';
 import 'package:profile_test_isp/pages/SummaryPage.dart';
 
@@ -155,7 +156,15 @@ class _HomePageState extends State<HomePage> {
                                 _buildMenuOption(
                                   icon: Icons.map,
                                   label: 'Maps',
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const GoogleMapData(),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 _buildMenuOption(
                                   icon: Icons.visibility,

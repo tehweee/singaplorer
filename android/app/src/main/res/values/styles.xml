@@ -9,4 +9,6 @@
     <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+        <string name="google_maps_api_key">AIzaSyAFyK4-ffQpm-1oZJzRIR4qu0T4L8ACDwM</string>
+
 </resources>
