@@ -7,8 +7,15 @@ import 'dart:math';
 
 class DepartureFlightDetailPage extends StatefulWidget {
   final String flightDetail;
+  final String totalPrice;
+  final String pax;
 
-  const DepartureFlightDetailPage({super.key, required this.flightDetail});
+  const DepartureFlightDetailPage({
+    super.key,
+    required this.flightDetail,
+    required this.totalPrice,
+    required this.pax,
+  });
 
   @override
   State<DepartureFlightDetailPage> createState() =>
@@ -103,6 +110,8 @@ class _DepartureFlightDetailPageState extends State<DepartureFlightDetailPage> {
                                   flight.arrivalTime,
                                   flight.price,
                                   flight.cabinClass,
+                                  widget.pax,
+                                  widget.totalPrice,
                                 );
                                 showDialog(
                                   context: context,
@@ -172,6 +181,8 @@ class _DepartureFlightDetailPageState extends State<DepartureFlightDetailPage> {
     arrivalTime,
     price,
     cabin,
+    pax,
+    totalPrice,
   ) async {
     final uri = Uri.parse(
       'http://10.0.2.2:3000/api/departure/flights/checkout',
