@@ -1,8 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../models/HotelDetailModel.dart';
+import '../models/HotelDetailModel.dart'; // Ensure this file exists and matches your model
 
 class HotelDetailPage extends StatefulWidget {
   final String hotelID;
@@ -21,7 +20,8 @@ class HotelDetailPage extends StatefulWidget {
 }
 
 class _HotelDetailPageState extends State<HotelDetailPage> {
-  List<HotelDetail> _hotel = [];
+  // CORRECTED: This must be a single HotelDetail object, not a List.
+  HotelDetail? _hotelDetail;
   bool _isLoading = true;
   String? _error;
 
@@ -40,26 +40,31 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
       final response = await http.get(uri);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        // This 'result' is the single Map<String, dynamic> from your Node.js API's 'data' key.
         final result = data['data'];
 
         setState(() {
-          if (result is List) {
-            _hotel = result.map((item) => HotelDetail.fromJson(item)).toList();
-          } else if (result is Map<String, dynamic>) {
-            _hotel = [HotelDetail.fromJson(result)];
+          if (result != null && result is Map<String, dynamic>) {
+            // CORRECTED: Directly parse the map into the single _hotelDetail object.
+            _hotelDetail = HotelDetail.fromJson(result);
           } else {
-            _hotel = [];
+            // Handle cases where 'data' might be null or not a map
+            _error =
+                'Invalid data format or no hotel details found in response.';
           }
           _isLoading = false;
         });
       } else {
-        throw Exception('Failed to load details');
+        throw Exception(
+          'Failed to load details: Server responded with status ${response.statusCode}',
+        );
       }
     } catch (e) {
       setState(() {
         _error = 'Failed to load details: $e';
         _isLoading = false;
       });
+      print('Error fetching hotel details: $e'); // Log error for debugging
     }
   }
 
@@ -68,102 +73,230 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Hotel Details"),
-        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.black,
+        elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : _hotel.isEmpty
-                  ? const Center(child: Text("No hotel details found."))
-                  : Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ListView.builder(
-                        itemCount: _hotel.length,
-                        itemBuilder: (context, index) {
-                          final hotel = _hotel[index];
-                          return Card(
-                            elevation: 5,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                ),
+              ),
+            )
+          : _hotelDetail ==
+                null // Check if the single object is null after loading
+          ? const Center(child: Text("No hotel details found."))
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hotel Name and Address Section
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _hotelDetail!.name, // Access properties directly
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 20,
+                              color: Colors.grey,
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    hotel.name,
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 18, color: Colors.grey),
-                                      const SizedBox(width: 5),
-                                      Expanded(child: Text("${hotel.address}, ${hotel.city}")),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      _buildInfoTile("Check-In", hotel.arrivalDate),
-                                      _buildInfoTile("Check-Out", hotel.departureDate),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      _buildInfoTile("Price", "SGD ${hotel.totalPrice}"),
-                                      _buildInfoTile("Rating", "${hotel.reviewScore}/10"),
-                                      _buildInfoTile("Reviews", hotel.reviewCount),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                          final uri = Uri.parse('http://10.0.2.2:3000/api/hotels/checkout');
-                                          try {
-                                            final response = http.post(
-                                              uri,
-                                              headers: {'Content-Type': 'application/json'},
-                                              body: jsonEncode({
-                                                'hotel_id': widget.hotelID,
-                                                'arrival_date':widget.arrivalDate,
-                                                'departure_date':widget.departureDate
-                                              }),
-                                            );
-                                          } catch (e) {
-                                            print('Checkout error: $e');
-                                          }
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.deepPurple,
-                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        "Book Now",
-                                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                "${_hotelDetail!.address}, ${_hotelDetail!.city}",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ),
-                          );
-                        },
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Image Carousel
+                  _hotelDetail!.hotelPhotos.isNotEmpty
+                      ? SizedBox(
+                          height: 250,
+                          child: PageView.builder(
+                            itemCount: _hotelDetail!.hotelPhotos.length,
+                            itemBuilder: (context, index) {
+                              final imageUrl = _hotelDetail!.hotelPhotos[index];
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            size: 60,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Text(
+                              'No images available',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        ),
+                  const SizedBox(height: 20),
+
+                  // Details Grid Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Booking Details',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Divider(),
+                        _buildDetailRow(
+                          Icons.calendar_today,
+                          'Check-in Date:',
+                          _hotelDetail!.arrivalDate,
+                        ),
+                        _buildDetailRow(
+                          Icons.calendar_today,
+                          'Check-out Date:',
+                          _hotelDetail!.departureDate,
+                        ),
+                        _buildDetailRow(
+                          Icons.attach_money,
+                          'Total Price:',
+                          '${_hotelDetail!.totalPrice.toStringAsFixed(2)} ${_hotelDetail!.currency}',
+                          isPrice: true,
+                        ),
+                        _buildDetailRow(
+                          Icons.star,
+                          'Rating:',
+                          '${_hotelDetail!.reviewScore.toStringAsFixed(1)}/10',
+                        ),
+                        _buildDetailRow(
+                          Icons.rate_review,
+                          'Reviews:',
+                          '${_hotelDetail!.reviewCount}',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Book Now Button
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            // Use 'final' instead of 'const' for runtime computed values
+                            final checkoutUri = Uri.parse(
+                              'http://10.0.2.2:3000/api/hotels/checkout',
+                            );
+                            try {
+                              final response = await http.post(
+                                checkoutUri,
+                                headers: {'Content-Type': 'application/json'},
+                                body: jsonEncode({
+                                  'hotel_id': widget.hotelID,
+                                  'arrival_date': widget.arrivalDate,
+                                  'departure_date': widget.departureDate,
+                                }),
+                              );
+
+                              if (response.statusCode == 200) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Booking successful! 🎉'),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Booking failed: ${response.statusCode} - ${response.body}',
+                                    ),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error during checkout: $e'),
+                                ),
+                              );
+                              print('Checkout error: $e');
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurpleAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: const Text(
+                            "Book Now",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
     );
   }
 
@@ -171,13 +304,46 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontSize: 14)),
       ],
     );
   }
+
+  // New helper widget to build consistent detail rows (as was suggested before)
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    dynamic value, {
+    bool isPrice = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20, color: Colors.deepPurple),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isPrice ? FontWeight.bold : FontWeight.normal,
+              color: isPrice ? Colors.green[700] : Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-

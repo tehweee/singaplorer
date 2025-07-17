@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:profile_test_isp/pages/GoogleMapPage.dart';
+import 'package:profile_test_isp/pages/ItineraryPage.dart';
 import 'package:profile_test_isp/pages/ProfilePage.dart';
 import 'package:profile_test_isp/pages/SummaryPage.dart';
 
 import 'AIChatPage.dart';
 import 'DepartureFlightPage.dart';
 import 'AboutUs.dart';
+import 'HotelPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -161,8 +163,7 @@ class _HomePageState extends State<HomePage> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              DepartureFlightPage(),
+                                          builder: (context) => ItineraryPage(),
                                         ),
                                       );
                                     },

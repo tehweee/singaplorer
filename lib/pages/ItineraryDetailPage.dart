@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'ItineraryBookingPage.dart';
-import '../models/ItineraryDetailModel.dart'; // Contains DetailPlan and Review
+import '../models/ItineraryDetailModel.dart';
 
 class ItineraryDetailPage extends StatefulWidget {
   final String attraction;
@@ -14,7 +14,7 @@ class ItineraryDetailPage extends StatefulWidget {
 }
 
 class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
-  List<DetailItinerary> _details = [];
+  DetailItinerary? _detail;
   bool _isLoading = true;
   String? _error;
 
@@ -36,31 +36,30 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
         final result = data['data'];
 
         setState(() {
-          if (result is List) {
-            _details = result.map((item) => DetailItinerary.fromJson(item)).toList();
-          } else if (result is Map<String, dynamic>) {
-            _details = [DetailItinerary.fromJson(result)];
+          if (result != null && result is Map<String, dynamic>) {
+            _detail = DetailItinerary.fromJson(result);
           } else {
-            _details = [];
+            _error = 'Invalid data format or no details found.';
           }
           _isLoading = false;
         });
       } else {
-        throw Exception('Failed to load details');
+        throw Exception('Failed to load details: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         _error = 'Failed to load details: $e';
         _isLoading = false;
       });
+      print('Error fetching attraction details: $e');
     }
   }
 
-  void _goToBookingPage(DetailItinerary detail) {
+  void _goToBookingPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ItineraryBookingPage(slug:widget.attraction),
+        builder: (context) => ItineraryBookingPage(slug: widget.attraction),
       ),
     );
   }
@@ -69,132 +68,359 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attraction Details'),
+        title: Text(_detail?.name ?? 'Attraction Details'),
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.deepPurple,
+        elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.deepPurple),
+            )
           : _error != null
-              ? Center(child: Text(_error!))
-              : _details.isEmpty
-                  ? const Center(child: Text('No details found.'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: _details.length,
-                      itemBuilder: (context, index) {
-                        final detail = _details[index];
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                ),
+              ),
+            )
+          : _detail == null
+          ? const Center(child: Text('No details found for this attraction.'))
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _detail!.photos.isNotEmpty
+                      ? SizedBox(
+                          height: 250,
+                          child: PageView.builder(
+                            itemCount: _detail!.photos.length,
+                            itemBuilder: (context, index) {
+                              final imageUrl = _detail!.photos[index];
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[300],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            size: 60,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  detail.name,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${detail.address}, ${detail.city}, ${detail.country}',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  '💵 Price: ${detail.price}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  '📄 Description',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(detail.description),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  '⭐ Reviews',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text('Total: ${detail.reviewTotal}'),
-                                Text('Average Rating: ${detail.reviewStats}'),
-                                const SizedBox(height: 12),
-                                ...detail.reviews.isEmpty
-                                    ? [const Text('No individual reviews available.')]
-                                    : detail.reviews.map((review) {
-                                        return Container(
-                                          margin: const EdgeInsets.only(top: 8),
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '⭐ ${review.numericRating}/5',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                review.content?.isNotEmpty == true
-                                                    ? review.content!
-                                                    : 'No comment provided.',
-                                              ),
-                                              if (review.userName != null)
-                                                Text(
-                                                  '— ${review.userName!}',
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList(),
-                                const SizedBox(height: 16),
-                                Center(
-                                  child: ElevatedButton(
-                                    onPressed: () => _goToBookingPage(detail),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 32, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Book Now',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        )
+                      : Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Text(
+                              'No images available',
+                              style: TextStyle(color: Colors.grey),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _detail!.name,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 20,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                '${_detail!.address}, ${_detail!.city}, ${_detail!.country}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children: [
+                            _buildInfoChip(
+                              Icons.attach_money,
+                              'Price: \$${_detail!.price.toStringAsFixed(2)}',
+                              Colors.green[700]!,
+                            ),
+                            _buildInfoChip(
+                              Icons.star,
+                              'Rating: ${_detail!.reviewStats.toStringAsFixed(1)}/5',
+                              Colors.amber[700]!,
+                            ),
+                            _buildInfoChip(
+                              Icons.reviews,
+                              '${_detail!.reviewTotal} Reviews',
+                              Colors.blue[700]!,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Description',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const Divider(color: Colors.grey),
+                        const SizedBox(height: 8),
+                        Text(
+                          _detail!.description,
+                          style: const TextStyle(fontSize: 16, height: 1.5),
+                          textAlign: TextAlign.justify,
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          'Customer Reviews',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const Divider(color: Colors.grey),
+                        const SizedBox(height: 8),
+                        _detail!.reviews.isEmpty
+                            ? const Text('No individual reviews available yet.')
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _detail!.reviews.length,
+                                itemBuilder: (context, idx) {
+                                  final review = _detail!.reviews[idx];
+                                  final formattedDate = review.epochMs != null
+                                      ? DateTime.fromMillisecondsSinceEpoch(
+                                          review.epochMs!,
+                                        )
+                                      : null;
+
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    elevation: 2,
+                                    color: Colors.grey[50],
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              CircleAvatar(
+                                                backgroundImage:
+                                                    review.userAvatar != null
+                                                    ? NetworkImage(
+                                                        review.userAvatar!,
+                                                      )
+                                                    : null,
+                                                backgroundColor:
+                                                    Colors.grey[300],
+                                                child: review.userAvatar == null
+                                                    ? const Icon(
+                                                        Icons.person,
+                                                        color: Colors.grey,
+                                                      )
+                                                    : null,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      review.userName ??
+                                                          'Anonymous',
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    if (review.userCountry !=
+                                                        null)
+                                                      Text(
+                                                        review.userCountry!,
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[600],
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                    if (formattedDate != null)
+                                                      Text(
+                                                        '${formattedDate.toLocal()}'
+                                                            .split(' ')[0],
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[500],
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    if (review.language != null)
+                                                      Text(
+                                                        'Language: ${review.language}',
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[500],
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.star,
+                                                    color: Colors.amber,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${review.numericRating}/5',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            review.content?.isNotEmpty == true
+                                                ? review.content!
+                                                : 'No comment provided.',
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                          if (review
+                                              .travelPartnerTypes
+                                              .isNotEmpty) ...[
+                                            const SizedBox(height: 10),
+                                            Wrap(
+                                              spacing: 6,
+                                              runSpacing: 6,
+                                              children: review
+                                                  .travelPartnerTypes
+                                                  .map(
+                                                    (type) => Chip(
+                                                      label: Text(type),
+                                                      backgroundColor:
+                                                          Colors.purple[50],
+                                                      labelStyle:
+                                                          const TextStyle(
+                                                            color: Colors
+                                                                .deepPurple,
+                                                          ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                        const SizedBox(height: 24),
+                        Center(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _goToBookingPage,
+                              icon: const Icon(Icons.confirmation_num_rounded),
+                              label: const Text(
+                                'Book Your Itinerary Now',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepOrangeAccent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,7 +1,24 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../models/ItineraryDateModel.dart'; // BookingDate class
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+// import '../models/ItineraryDateModel.dart'; // Ensure this path is correct
+
+// Define the BookingDate model based on your strict requirement
+// If this is in a separate file, ensure that file's content matches this.
+class BookingDate {
+  final String date;
+  BookingDate({required this.date});
+
+  factory BookingDate.fromJson(Map<String, dynamic> json) {
+    return BookingDate(
+      date:
+          json['start']?.toString() ??
+          'No Booking Date', // Assuming API sends 'start'
+    );
+  }
+}
 
 class ItineraryBookingPage extends StatefulWidget {
   final String slug;
@@ -12,19 +29,50 @@ class ItineraryBookingPage extends StatefulWidget {
 }
 
 class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
-  List<BookingDate> _dates = [];
-  final _dateController = TextEditingController(text: '2025-07-23');
-  String? _selectedDate;
+  List<BookingDate> _availableDates = []; // List of available date objects
+  String?
+  _selectedAvailableDate; // Stores the date string of the *single* selected available option
+
+  // Calendar related state
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay; // The date selected on the calendar itself
+  String?
+  _currentCalendarSelectedDateString; // Formatted string of the calendar selected date
+
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _fetchFlights();
+    _selectedDay = DateTime.now();
+    _currentCalendarSelectedDateString = DateFormat(
+      'yyyy-MM-dd',
+    ).format(_selectedDay!);
+    _fetchAvailability();
   }
 
-  Future<void> _fetchFlights() async {
+  Future<void> _fetchAvailability() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _availableDates = []; // Clear previous dates
+      _selectedAvailableDate = null; // Clear selection when fetching new dates
+    });
+
+    if (_currentCalendarSelectedDateString == null) {
+      setState(() {
+        _errorMessage = 'Please select a date from the calendar.';
+        _isLoading = false;
+      });
+      return;
+    }
+
     final encodedSlug = Uri.encodeComponent(widget.slug);
-    final encodedDate = Uri.encodeComponent(_dateController.text);
+    final encodedDate = Uri.encodeComponent(
+      _currentCalendarSelectedDateString!,
+    );
 
     final uri = Uri.parse(
       'http://10.0.2.2:3000/api/attraction/detail/avalibility'
@@ -33,147 +81,315 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
 
     try {
       final response = await http.get(uri);
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Response status for availability: ${response.statusCode}');
+      print('Response body for availability: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final dates = List<Map<String, dynamic>>.from(data['data'] ?? []);
+        final datesData = List<Map<String, dynamic>>.from(data['data'] ?? []);
 
         setState(() {
-          _dates = dates.map((item) => BookingDate.fromJson(item)).toList();
-          _selectedDate = null;
+          _availableDates = datesData
+              .map((item) => BookingDate.fromJson(item))
+              .toList();
+          if (_availableDates.isEmpty) {
+            _errorMessage = 'No availability found for this date.';
+          } else {
+            // Optional: Auto-select the first available date if any
+            _selectedAvailableDate = _availableDates.first.date;
+          }
+          _isLoading = false;
         });
       } else {
-        throw Exception('Failed to load availability');
+        setState(() {
+          _errorMessage = 'Failed to load availability: ${response.statusCode}';
+          _isLoading = false;
+        });
+        throw Exception('Failed to load availability: ${response.statusCode}');
       }
     } catch (e) {
-      print('Exception: $e');
+      setState(() {
+        _errorMessage = 'Error fetching availability: $e';
+        _isLoading = false;
+      });
+      print('Exception fetching availability: $e');
     }
   }
 
-  void _selectDate(String date) {
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    if (!isSameDay(_selectedDay, selectedDay)) {
+      setState(() {
+        _selectedDay = selectedDay;
+        _focusedDay = focusedDay;
+        _currentCalendarSelectedDateString = DateFormat(
+          'yyyy-MM-dd',
+        ).format(selectedDay);
+      });
+      _fetchAvailability(); // Automatically fetch availability for the new date
+    }
+  }
+
+  void _selectAvailableDate(String? date) {
     setState(() {
-      _selectedDate = date;
+      _selectedAvailableDate = date;
     });
   }
 
   void _checkout() async {
-    if (_selectedDate == null) return;
+    if (_selectedAvailableDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select an available date to proceed."),
+        ),
+      );
+      return;
+    }
 
-    // Debug print
-    print('Sending slug: ${widget.slug}');
-    print('Sending date: $_selectedDate');
-
-    // Show confirmation dialog
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Checkout"),
-        content: Text("Proceeding to checkout with:\n$_selectedDate"),
+        title: const Text("Confirm Booking"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Attraction: ${widget.slug}"),
+            Text("Selected Date: ${_selectedAvailableDate!}"),
+            const SizedBox(height: 10),
+            const Text("Proceed with this booking?"),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context); // Dismiss dialog
+              await _performCheckoutRequest(
+                _selectedAvailableDate!,
+              ); // Pass the single selected date
+            },
+            child: const Text("Confirm"),
           ),
         ],
       ),
     );
+  }
 
+  Future<void> _performCheckoutRequest(String dateToCheckout) async {
     final uri = Uri.parse('http://10.0.2.2:3000/api/attraction/checkout');
 
     try {
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'slug': widget.slug, 'date': _selectedDate}),
+        body: jsonEncode({
+          'slug': widget.slug,
+          'date': dateToCheckout, // Send the single selected date
+        }),
       );
 
       print('Checkout response status: ${response.statusCode}');
       print('Checkout response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Booking successful for selected date! 🎉"),
+          ),
+        );
+        setState(() {
+          _selectedAvailableDate =
+              null; // Clear selection after successful checkout
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Booking failed: ${response.body}")),
+        );
+      }
     } catch (e) {
       print('Checkout error: $e');
-    }
-  }
-
-  bool _isValidDate(String input) {
-    try {
-      final parsed = DateTime.parse(input);
-      return input == parsed.toIso8601String().split('T').first;
-    } catch (_) {
-      return false;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Checkout error: $e")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Select Booking Date")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _dateController,
-              decoration: const InputDecoration(
-                labelText: "Enter date (yyyy-MM-dd)",
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.datetime,
-              onSubmitted: (value) {
-                if (_isValidDate(value)) {
-                  _fetchFlights();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Invalid date format")),
-                  );
+      appBar: AppBar(
+        title: const Text("Select Booking Date"),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          // ------------------- Calendar Selection -------------------
+          Card(
+            margin: const EdgeInsets.all(8.0),
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: TableCalendar(
+              firstDay: DateTime.utc(2023, 1, 1),
+              lastDay: DateTime.utc(2026, 12, 31),
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+              calendarFormat: _calendarFormat,
+              onDaySelected: _onDaySelected,
+              onFormatChanged: (format) {
+                if (_calendarFormat != format) {
+                  setState(() {
+                    _calendarFormat = format;
+                  });
                 }
               },
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                if (_isValidDate(_dateController.text)) {
-                  _fetchFlights();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Invalid date format")),
-                  );
-                }
+              onPageChanged: (focusedDay) {
+                _focusedDay = focusedDay;
               },
-              child: const Text("Search Availability"),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: _dates.isEmpty
-                  ? const Center(child: Text("No available dates"))
-                  : ListView.builder(
-                      itemCount: _dates.length,
-                      itemBuilder: (context, index) {
-                        final date = _dates[index].date;
-                        return RadioListTile<String>(
-                          title: Text(date),
-                          value: date,
-                          groupValue: _selectedDate,
-                          onChanged: (value) => _selectDate(value!),
-                        );
-                      },
-                    ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _selectedDate != null ? _checkout : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
-              child: const Text("Checkout", style: TextStyle(fontSize: 16)),
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: Colors.deepPurple.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: const BoxDecoration(
+                  color: Colors.deepPurple,
+                  shape: BoxShape.circle,
+                ),
+                selectedTextStyle: const TextStyle(color: Colors.white),
+                weekendTextStyle: const TextStyle(color: Colors.red),
+              ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+
+          // ------------------- Availability List (Radio Buttons) -------------------
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              _currentCalendarSelectedDateString != null
+                  ? 'Available Dates for $_currentCalendarSelectedDateString:'
+                  : 'Select a date from the calendar',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.deepPurple),
+                  )
+                : _errorMessage != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red, fontSize: 16),
+                      ),
+                    ),
+                  )
+                : _availableDates.isEmpty
+                ? const Center(
+                    child: Text("No availability found for this date."),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: _availableDates.length,
+                    itemBuilder: (context, index) {
+                      final bookingDate = _availableDates[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        elevation: 2,
+                        color: _selectedAvailableDate == bookingDate.date
+                            ? Colors.deepPurple.withOpacity(0.1)
+                            : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: _selectedAvailableDate == bookingDate.date
+                                ? Colors.deepPurple
+                                : Colors.grey.shade300,
+                            width: _selectedAvailableDate == bookingDate.date
+                                ? 2.0
+                                : 1.0,
+                          ),
+                        ),
+                        child: RadioListTile<String>(
+                          title: Text(
+                            'Available: ${bookingDate.date}',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          value: bookingDate
+                              .date, // The value of this radio button
+                          groupValue:
+                              _selectedAvailableDate, // The currently selected value in the group
+                          onChanged:
+                              _selectAvailableDate, // Callback when this radio button is selected
+                          activeColor: Colors.deepPurple,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(height: 20),
+
+          // ------------------- Checkout Button (Fixed at Bottom) -------------------
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 10.0,
+            ),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              // Enable only if a single date is selected
+              onPressed: _selectedAvailableDate != null ? _checkout : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrangeAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 5,
+                textStyle: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: const Text("Proceed to Checkout"),
+            ),
+          ),
+        ],
       ),
     );
   }
