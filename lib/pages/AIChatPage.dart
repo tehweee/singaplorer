@@ -26,7 +26,7 @@ class _AIChatPageState extends State<AIChatPage> {
     "How many people will be travelling?",
     "What is your budget? (per person)",
     "How long do you want to go for the trip? (in days)",
-    "What do you wish to get out of the trip?",
+    "Is there anything you'd like to learn or get from Singapore?",
   ];
 
   final Map<String, String> _answers = {};

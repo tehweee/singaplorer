@@ -202,22 +202,6 @@ class _AboutUsPageState extends State<AboutUsPage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
-            label: 'Favourites',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.help), label: 'Support'),
-        ],
-      ),
     );
   }
 

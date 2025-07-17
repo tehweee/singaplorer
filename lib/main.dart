@@ -15,7 +15,6 @@ import 'pages/HomePage.dart';
 import 'pages/DepartureFlightPage.dart';
 import 'pages/StartPage.dart';
 import 'pages/AboutUs.dart';
-import 'pages/AboutPage.dart';
 import 'pages/GoogleMapPage.dart';
 
 void main() async {
