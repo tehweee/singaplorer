@@ -532,11 +532,11 @@ class _LoginPageState extends State<LoginPage>
     );
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _animationController.forward();
   }
 
@@ -571,28 +571,30 @@ class _LoginPageState extends State<LoginPage>
 
       if (response.statusCode == 200) {
         // Navigate to homepage
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
                 const HomePage(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(1.0, 0.0),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeInOut,
-                  ),
-                ),
-                child: child,
-              );
-            },
+                  return SlideTransition(
+                    position:
+                        Tween<Offset>(
+                          begin: const Offset(1.0, 0.0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                    child: child,
+                  );
+                },
             transitionDuration: const Duration(milliseconds: 300),
           ),
+          (Route<dynamic> route) => false,
         );
       } else {
         _showErrorDialog(responseData['message'] ?? 'Login failed');
@@ -624,7 +626,7 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return  Scaffold(
       backgroundColor: const Color(0xFFD32F2F),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -743,7 +745,7 @@ class _LoginPageState extends State<LoginPage>
                             ),
                             const SizedBox(height: 24),
                             _buildActionButton(
-                              text: 'Login',
+                              text: 'Log in',
                               onPressed: _isLoading ? null : loginUser,
                               isLoading: _isLoading,
                             ),
@@ -894,24 +896,26 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _navigateToSignUp() {
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
             const SignUpPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1.0, 0.0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-            ),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+                ),
             child: child,
           );
         },
         transitionDuration: const Duration(milliseconds: 300),
       ),
+      (Route<dynamic> route) => false,
     );
   }
 

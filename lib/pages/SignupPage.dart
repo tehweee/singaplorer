@@ -75,9 +75,10 @@ class _SignUpPageState extends State<SignUpPage>
     setState(() => _isLoading = false);
 
     if (response.statusCode == 200) {
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
+        (Route<dynamic> route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -413,7 +414,7 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _navigateToLogin() {
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -432,6 +433,7 @@ class _SignUpPageState extends State<SignUpPage>
         },
         transitionDuration: const Duration(milliseconds: 300),
       ),
+      (Route<dynamic> route) => false,
     );
   }
 }

@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   String _username = 'Explorer';
   bool _isLoading = true;
   int _currentIndex = 0;
+  DateTime? _lastBackPressed;
 
   @override
   void initState() {
@@ -33,306 +34,333 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFAA0000)),
-            )
-          : SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  // Top section with profile and search
-                  Container(
-                    color: const Color(0xFFAA0000),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 30),
+    return PopScope(
+      canPop: true, // Let system handle pop if needed
+      onPopInvoked: (didPop) async {
+        final now = DateTime.now();
+        if (_lastBackPressed == null ||
+            now.difference(_lastBackPressed!) > Duration(seconds: 2)) {
+          _lastBackPressed = now;
 
-                        Row(
-                          children: [
-                            // Profile circle
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditProfileScreen(),
+          // Show a snackbar or toast
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          // Exit the app
+          Navigator.of(
+            context,
+          ).maybePop(); // or SystemNavigator.pop() for force quit
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFFAA0000)),
+              )
+            : SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    // Top section with profile and search
+                    Container(
+                      color: const Color(0xFFAA0000),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 30),
+
+                          Row(
+                            children: [
+                              // Profile circle
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditProfileScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
                                   ),
-                                );
-                              },
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Color(0xFFAA0000),
-                                  size: 24,
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: Color(0xFFAA0000),
+                                    size: 24,
+                                  ),
                                 ),
                               ),
+
+                              const SizedBox(width: 12),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Title text
+                          const Text(
+                            'Time to explore Singapore',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Navigate the home menu to select your itinerary',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
 
-                            const SizedBox(width: 12),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Title text
-                        const Text(
-                          'Time to explore Singapore',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                    // White curved section
+                    Container(
+                      decoration: const BoxDecoration(color: Color(0xFFAA0000)),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(30),
+                            topRight: Radius.circular(30),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Navigate the home menu to select your itinerary',
-                          style: TextStyle(fontSize: 14, color: Colors.white70),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
 
-                  // White curved section
-                  Container(
-                    decoration: const BoxDecoration(color: Color(0xFFAA0000)),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(30),
-                          topRight: Radius.circular(30),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-
-                            // Menu options
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildMenuOption(
-                                  icon: Icons.flight_takeoff,
-                                  label: 'Plan Now',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            DepartureFlightPage(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                _buildMenuOption(
-                                  icon: Icons.auto_awesome,
-                                  label: 'AI Plan',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => AIChatPage(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                _buildMenuOption(
-                                  icon: Icons.map,
-                                  label: 'Maps',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const GoogleMapData(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                _buildMenuOption(
-                                  icon: Icons.visibility,
-                                  label: 'View Plans',
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AiChatPage(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // AI Planner Card
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AIChatPage(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0xFFAA0000),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 60,
-                                        height: 60,
-                                        child: Icon(
-                                          Icons.flight,
-                                          color: const Color(0xFFAA0000),
-                                          size: 40,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: const [
-                                            Text(
-                                              'Explore Our AI Powered',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFFAA0000),
-                                              ),
-                                            ),
-                                            Text(
-                                              'Itinerary Planner!',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFFAA0000),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: Color(0xFFAA0000),
-                                        size: 20,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Ready Itinerary Section
-                            const Text(
-                              'Explore Ready Itinerary!',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFAA0000),
-                              ),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Itinerary cards
-                            SizedBox(
-                              height: 120,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
+                              // Menu options
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  _buildItineraryCard(),
-                                  const SizedBox(width: 12),
-                                  _buildItineraryCard(),
-                                  const SizedBox(width: 12),
-                                  _buildItineraryCard(),
+                                  _buildMenuOption(
+                                    icon: Icons.flight_takeoff,
+                                    label: 'Plan Now',
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              DepartureFlightPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  _buildMenuOption(
+                                    icon: Icons.auto_awesome,
+                                    label: 'AI Plan',
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AIChatPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  _buildMenuOption(
+                                    icon: Icons.map,
+                                    label: 'Maps',
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const GoogleMapData(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  _buildMenuOption(
+                                    icon: Icons.visibility,
+                                    label: 'View Plans',
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const AiChatPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
+
+                              const SizedBox(height: 24),
+
+                              // AI Planner Card
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AIChatPage(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: const Color(0xFFAA0000),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          child: Icon(
+                                            Icons.flight,
+                                            color: const Color(0xFFAA0000),
+                                            size: 40,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: const [
+                                              Text(
+                                                'Explore Our AI Powered',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFFAA0000),
+                                                ),
+                                              ),
+                                              Text(
+                                                'Itinerary Planner!',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFFAA0000),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.arrow_forward_ios,
+                                          color: Color(0xFFAA0000),
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Ready Itinerary Section
+                              const Text(
+                                'Explore Ready Itinerary!',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFAA0000),
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Itinerary cards
+                              SizedBox(
+                                height: 120,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    _buildItineraryCard(),
+                                    const SizedBox(width: 12),
+                                    _buildItineraryCard(),
+                                    const SizedBox(width: 12),
+                                    _buildItineraryCard(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+
+            switch (index) {
+              case 0:
+                // Stay on home
+                break;
+              case 1:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AboutUsPage()),
+                );
+                break;
+              case 2:
+                // TODO: Navigate to Favourites page
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Favourites coming soon!")),
+                );
+                break;
+              case 3:
+                _showLogoutDialog(); // or replace with Support later
+                break;
+            }
+          },
+
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: const Color(0xFFAA0000),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
+          showSelectedLabels: false, // ✅ Hides selected label
+          showUnselectedLabels: false,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark),
+              label: 'Favourites',
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-
-          switch (index) {
-            case 0:
-              // Stay on home
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AboutUsPage()),
-              );
-              break;
-            case 2:
-              // TODO: Navigate to Favourites page
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Favourites coming soon!")),
-              );
-              break;
-            case 3:
-              _showLogoutDialog(); // or replace with Support later
-              break;
-          }
-        },
-
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFAA0000),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        showSelectedLabels: false, // ✅ Hides selected label
-        showUnselectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
-            label: 'Favourites',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.help), label: 'Support'),
-        ],
+            BottomNavigationBarItem(icon: Icon(Icons.help), label: 'Support'),
+          ],
+        ),
       ),
     );
   }

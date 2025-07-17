@@ -24,5 +24,5 @@ void main() async {
 
   await Stripe.instance.applySettings();
   Gemini.init(apiKey: GEMINI_API_KEY);
-  runApp(MaterialApp(home: StartPage()));
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, home: StartPage()));
 }
