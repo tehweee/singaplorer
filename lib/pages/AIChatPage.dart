@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import '../functions/payment_service.dart';
 import 'package:http/http.dart' as http;
 
 class AIChatPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _AIChatPageState extends State<AIChatPage> {
 
   ChatUser currentUser = ChatUser(id: "0", firstName: "User");
   ChatUser geminiUser = ChatUser(id: "1", firstName: "Gemini");
+  late Future<int> _tokenFuture;
 
   int _questionIndex = 0;
   final List<String> _questions = [
@@ -36,6 +38,7 @@ class _AIChatPageState extends State<AIChatPage> {
   void initState() {
     super.initState();
     _askNextQuestion();
+    _tokenFuture = aiTokenCheck();
   }
 
   void _askNextQuestion() {
@@ -150,11 +153,11 @@ class _AIChatPageState extends State<AIChatPage> {
         '''
 I am planning a trip and here are my preferences:
 
-**Category:** ${_answers[_questions[0]]}
-**People:** ${_answers[_questions[1]]}
-**Budget:** ${_answers[_questions[2]]}
-**Duration:** ${_answers[_questions[3]]}
-**Goals:** ${_answers[_questions[4]]}
+*Category:* ${_answers[_questions[0]]}
+*People:* ${_answers[_questions[1]]}
+*Budget:* ${_answers[_questions[2]]}
+*Duration:* ${_answers[_questions[3]]}
+*Goals:* ${_answers[_questions[4]]}
 
 Based on this, please generate a personalized itinerary with daily activities, estimated costs, and recommendations. Keep it editable so I can adjust later.
 ''';
@@ -185,6 +188,24 @@ Please update or respond accordingly.
       length,
       (index) => chars[rand.nextInt(chars.length)],
     ).join();
+  }
+
+  Future<int> aiTokenCheck() async {
+    final url = Uri.parse('http://10.0.2.2:3000/api/aiToken');
+    try {
+      final response = await http.get(url);
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        int userToken = (jsonDecode(response.body) as num).toInt();
+        return userToken;
+      } else {
+        throw Exception('Failed with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in aiTokenCheck: $e');
+      rethrow;
+    }
   }
 
   // Send the AI chat response to your Node.js API
@@ -238,7 +259,7 @@ Please update or respond accordingly.
             );
 
             // Send the full response to Node.js API
-            await sendAIChatToServer(fullResponse);
+            // await sendAIChatToServer(fullResponse);
 
             final botReply = ChatMessage(
               user: geminiUser,
@@ -255,6 +276,45 @@ Please update or respond accordingly.
             print("Gemini error: $e");
           },
         );
+  }
+
+  void handlePayment() async {
+    final result = await makePayment();
+
+    if (!mounted) return;
+
+    switch (result) {
+      case PaymentResult.success:
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Payment completed!')));
+        final url = Uri.parse('http://10.0.2.2:3000/api/addAiToken');
+        final response = await http.put(url);
+        if (response.statusCode == 200) {
+          jsonDecode(response.body);
+          setState(() {
+            _tokenFuture = aiTokenCheck();
+          });
+        } else {
+          jsonDecode(response.body);
+        }
+        break;
+      case PaymentResult.cancelled:
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Payment was canceled.')));
+        break;
+      case PaymentResult.failed:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed. Please try again.')),
+        );
+        break;
+      case PaymentResult.unknownError:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong. Please try again.')),
+        );
+        break;
+    }
   }
 
   Widget _buildMessage(ChatMessage message) {
@@ -275,21 +335,51 @@ Please update or respond accordingly.
         children: [
           isAI ? MarkdownBody(data: message.text) : Text(message.text),
           if (isAI && !message.isInitialQuestion)
-            IconButton(
-              icon: Icon(
-                message.isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: message.isFavorite ? Colors.red : Colors.grey,
-                size: 20,
-              ),
-              onPressed: () {
-                setState(() {
-                  message.isFavorite = !message.isFavorite;
-                });
-                print("Favorite toggled: ${message.isFavorite}");
+            FutureBuilder<int>(
+              future: aiTokenCheck(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  // While loading, show a placeholder icon or nothing
+                  return SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  );
+                } else if (snapshot.hasError) {
+                  // On error, show an error icon or nothing
+                  return Icon(Icons.error, color: Colors.red, size: 20);
+                } else {
+                  final tokenCount = snapshot.data ?? 0;
+                  // Only show favorite icon if tokenCount >= 3
+                  if (tokenCount >= 3) {
+                    return IconButton(
+                      icon: Icon(
+                        message.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: message.isFavorite ? Colors.red : Colors.grey,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          message.isFavorite = !message.isFavorite;
+                        });
+                        print("Favorite toggled: ${message.isFavorite}");
+                        sendAIChatToServer(message.text);
+                      },
+                      padding: const EdgeInsets.only(top: 4),
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                    );
+                  } else {
+                    // If tokenCount < 3, you can return a locked icon or no icon
+                    return IconButton(
+                      icon: Icon(Icons.monetization_on),
+                      onPressed: handlePayment,
+                    );
+                  }
+                }
               },
-              padding: const EdgeInsets.only(top: 4),
-              constraints: const BoxConstraints(),
-              visualDensity: VisualDensity.compact,
             ),
         ],
       ),

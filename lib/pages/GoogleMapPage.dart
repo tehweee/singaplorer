@@ -20,6 +20,13 @@ class GoogleMapData extends StatelessWidget {
         'description': 'Arrive in Singapore & Check into your hotel',
       },
       {
+        'name': 'test',
+        'lat': 1.37223,
+        'lng': 103.8369,
+        'address': 'test',
+        'description': 'test',
+      },
+      {
         'name': 'Gardens by the Bay',
         'lat': 1.2816,
         'lng': 103.8636,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:profile_test_isp/pages/GoogleMapPage.dart';
 import 'package:profile_test_isp/pages/ProfilePage.dart';
 import 'package:profile_test_isp/pages/SummaryPage.dart';
@@ -34,26 +35,24 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: true, // Let system handle pop if needed
-      onPopInvoked: (didPop) async {
+    return PopScope<Object?>(
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (didPop) return; // Exit already happened—no need to intercept.
+
         final now = DateTime.now();
         if (_lastBackPressed == null ||
-            now.difference(_lastBackPressed!) > Duration(seconds: 2)) {
+            now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
           _lastBackPressed = now;
 
-          // Show a snackbar or toast
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Press back again to exit'),
               duration: Duration(seconds: 2),
             ),
           );
         } else {
-          // Exit the app
-          Navigator.of(
-            context,
-          ).maybePop(); // or SystemNavigator.pop() for force quit
+          // User pressed back twice — exit app
+          SystemNavigator.pop();
         }
       },
       child: Scaffold(
