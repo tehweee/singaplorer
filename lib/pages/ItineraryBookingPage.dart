@@ -22,7 +22,12 @@ class BookingDate {
 
 class ItineraryBookingPage extends StatefulWidget {
   final String slug;
-  const ItineraryBookingPage({super.key, required this.slug});
+  final double price; // The price per person is now available
+  const ItineraryBookingPage({
+    super.key,
+    required this.slug,
+    required this.price,
+  });
 
   @override
   State<ItineraryBookingPage> createState() => _ItineraryBookingPageState();
@@ -43,6 +48,10 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  // Pax and Price related state
+  int _numberOfPeople = 1; // Default to 1 person
+  late double _totalPrice; // To store the calculated total price
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +59,14 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
     _currentCalendarSelectedDateString = DateFormat(
       'yyyy-MM-dd',
     ).format(_selectedDay!);
+    _updateTotalPrice(); // Initialize total price
     _fetchAvailability();
+  }
+
+  void _updateTotalPrice() {
+    setState(() {
+      _totalPrice = widget.price * _numberOfPeople;
+    });
   }
 
   Future<void> _fetchAvailability() async {
@@ -145,6 +161,15 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
       return;
     }
 
+    if (_numberOfPeople <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a valid number of people (at least 1)."),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -155,6 +180,10 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
           children: [
             Text("Attraction: ${widget.slug}"),
             Text("Selected Date: ${_selectedAvailableDate!}"),
+            Text("Number of People: $_numberOfPeople"),
+            Text(
+              "Total Price: \$${_totalPrice.toStringAsFixed(2)}",
+            ), // Display total price
             const SizedBox(height: 10),
             const Text("Proceed with this booking?"),
           ],
@@ -169,7 +198,8 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
               Navigator.pop(context); // Dismiss dialog
               await _performCheckoutRequest(
                 _selectedAvailableDate!,
-              ); // Pass the single selected date
+                _numberOfPeople, // Pass the number of people
+              );
             },
             child: const Text("Confirm"),
           ),
@@ -178,7 +208,7 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
     );
   }
 
-  Future<void> _performCheckoutRequest(String dateToCheckout) async {
+  Future<void> _performCheckoutRequest(String dateToCheckout, int pax) async {
     final uri = Uri.parse('http://10.0.2.2:3000/api/attraction/checkout');
 
     try {
@@ -188,9 +218,10 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
         body: jsonEncode({
           'slug': widget.slug,
           'date': dateToCheckout, // Send the single selected date
+          'pax': pax, // Send the number of people
         }),
       );
-
+      print("Checkout Payload: Date: $dateToCheckout, Pax: $pax");
       print('Checkout response status: ${response.statusCode}');
       print('Checkout response body: ${response.body}');
 
@@ -227,128 +258,260 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
       ),
       body: Column(
         children: [
-          // ------------------- Calendar Selection -------------------
-          Card(
-            margin: const EdgeInsets.all(8.0),
-            elevation: 5,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: TableCalendar(
-              firstDay: DateTime.utc(2023, 1, 1),
-              lastDay: DateTime.utc(2026, 12, 31),
-              focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              calendarFormat: _calendarFormat,
-              onDaySelected: _onDaySelected,
-              onFormatChanged: (format) {
-                if (_calendarFormat != format) {
-                  setState(() {
-                    _calendarFormat = format;
-                  });
-                }
-              },
-              onPageChanged: (focusedDay) {
-                _focusedDay = focusedDay;
-              },
-              headerStyle: const HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true,
-                titleTextStyle: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              calendarStyle: CalendarStyle(
-                todayDecoration: BoxDecoration(
-                  color: Colors.deepPurple.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-                selectedDecoration: const BoxDecoration(
-                  color: Colors.deepPurple,
-                  shape: BoxShape.circle,
-                ),
-                selectedTextStyle: const TextStyle(color: Colors.white),
-                weekendTextStyle: const TextStyle(color: Colors.red),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ------------------- Availability List (Radio Buttons) -------------------
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              _currentCalendarSelectedDateString != null
-                  ? 'Available Dates for $_currentCalendarSelectedDateString:'
-                  : 'Select a date from the calendar',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 10),
-
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Colors.deepPurple),
-                  )
-                : _errorMessage != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red, fontSize: 16),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align content to start
+                children: [
+                  // ------------------- Number of People Input with Stepper -------------------
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10.0,
+                          horizontal: 16.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Number of People (Pax)",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.remove_circle_outline,
+                                    color: Colors.deepPurple,
+                                    size: 30,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      if (_numberOfPeople > 1) {
+                                        _numberOfPeople--;
+                                        _updateTotalPrice();
+                                      }
+                                    });
+                                  },
+                                ),
+                                Text(
+                                  '$_numberOfPeople',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.add_circle_outline,
+                                    color: Colors.deepPurple,
+                                    size: 30,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _numberOfPeople++;
+                                      _updateTotalPrice();
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  )
-                : _availableDates.isEmpty
-                ? const Center(
-                    child: Text("No availability found for this date."),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: _availableDates.length,
-                    itemBuilder: (context, index) {
-                      final bookingDate = _availableDates[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        elevation: 2,
-                        color: _selectedAvailableDate == bookingDate.date
-                            ? Colors.deepPurple.withOpacity(0.1)
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: _selectedAvailableDate == bookingDate.date
-                                ? Colors.deepPurple
-                                : Colors.grey.shade300,
-                            width: _selectedAvailableDate == bookingDate.date
-                                ? 2.0
-                                : 1.0,
-                          ),
+                  ),
+
+                  // ------------------- Price Display -------------------
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      color: Colors.purple.shade50, // Lighter purple background
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Total Price:",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
+                            ),
+                            Text(
+                              '\$${_totalPrice.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepOrangeAccent,
+                              ),
+                            ),
+                          ],
                         ),
-                        child: RadioListTile<String>(
-                          title: Text(
-                            'Available: ${bookingDate.date}',
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ------------------- Calendar Selection -------------------
+                  Card(
+                    margin: const EdgeInsets.all(8.0),
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: TableCalendar(
+                      firstDay: DateTime.utc(2023, 1, 1),
+                      lastDay: DateTime.utc(2026, 12, 31),
+                      focusedDay: _focusedDay,
+                      selectedDayPredicate: (day) =>
+                          isSameDay(_selectedDay, day),
+                      calendarFormat: _calendarFormat,
+                      onDaySelected: _onDaySelected,
+                      onFormatChanged: (format) {
+                        if (_calendarFormat != format) {
+                          setState(() {
+                            _calendarFormat = format;
+                          });
+                        }
+                      },
+                      onPageChanged: (focusedDay) {
+                        _focusedDay = focusedDay;
+                      },
+                      headerStyle: const HeaderStyle(
+                        formatButtonVisible: false,
+                        titleCentered: true,
+                        titleTextStyle: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      calendarStyle: CalendarStyle(
+                        todayDecoration: BoxDecoration(
+                          color: Colors.deepPurple.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        selectedDecoration: const BoxDecoration(
+                          color: Colors.deepPurple,
+                          shape: BoxShape.circle,
+                        ),
+                        selectedTextStyle: const TextStyle(color: Colors.white),
+                        weekendTextStyle: const TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ------------------- Availability List (Radio Buttons) -------------------
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      _currentCalendarSelectedDateString != null
+                          ? 'Available Dates for $_currentCalendarSelectedDateString:'
+                          : 'Select a date from the calendar',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.deepPurple,
+                          ),
+                        )
+                      : _errorMessage != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
-                          value: bookingDate
-                              .date, // The value of this radio button
-                          groupValue:
-                              _selectedAvailableDate, // The currently selected value in the group
-                          onChanged:
-                              _selectAvailableDate, // Callback when this radio button is selected
-                          activeColor: Colors.deepPurple,
+                        )
+                      : _availableDates.isEmpty
+                      ? const Center(
+                          child: Text("No availability found for this date."),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true, // Important for nested ListView
+                          physics:
+                              const NeverScrollableScrollPhysics(), // Important for nested ListView
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          itemCount: _availableDates.length,
+                          itemBuilder: (context, index) {
+                            final bookingDate = _availableDates[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              elevation: 2,
+                              color: _selectedAvailableDate == bookingDate.date
+                                  ? Colors.deepPurple.withOpacity(0.1)
+                                  : Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: BorderSide(
+                                  color:
+                                      _selectedAvailableDate == bookingDate.date
+                                      ? Colors.deepPurple
+                                      : Colors.grey.shade300,
+                                  width:
+                                      _selectedAvailableDate == bookingDate.date
+                                      ? 2.0
+                                      : 1.0,
+                                ),
+                              ),
+                              child: RadioListTile<String>(
+                                title: Text(
+                                  'Available: ${bookingDate.date}',
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                                value: bookingDate
+                                    .date, // The value of this radio button
+                                groupValue:
+                                    _selectedAvailableDate, // The currently selected value in the group
+                                onChanged:
+                                    _selectAvailableDate, // Callback when this radio button is selected
+                                activeColor: Colors.deepPurple,
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -372,7 +535,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
             ),
             child: ElevatedButton(
               // Enable only if a single date is selected
-              onPressed: _selectedAvailableDate != null ? _checkout : null,
+              onPressed: _selectedAvailableDate != null && _numberOfPeople > 0
+                  ? _checkout
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepOrangeAccent,
                 foregroundColor: Colors.white,

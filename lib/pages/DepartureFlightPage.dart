@@ -15,8 +15,8 @@ class DepartureFlightPage extends StatefulWidget {
 class _DepartureFlightPageState extends State<DepartureFlightPage> {
   List<Flight> _flights = [];
 
-  String _from = 'SIN.AIRPORT';
-  String _to = 'LHR.AIRPORT';
+  String _from = 'LHR.AIRPORT';
+  String _to = 'SIN.AIRPORT';
   String _depart = '2025-07-25';
   String _selectedCabin = 'ECONOMY';
   String _selectedSort = 'BEST';
@@ -105,7 +105,7 @@ class _DepartureFlightPageState extends State<DepartureFlightPage> {
     final int paxCount = int.tryParse(_pax) ?? 1;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Search Flights')),
+      appBar: AppBar(title: Text('Search Departure Flights')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: _isLoading

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'ItineraryDetailPage.dart'; // Make sure this file exists for navigation
 import '../models/ItineraryModel.dart'; // Your Itinerary model
+import 'ArrivalFlightPage.dart'; // <--- ADD THIS IMPORT for your flight page
 
 class ItineraryPage extends StatefulWidget {
   const ItineraryPage({super.key});
@@ -17,7 +18,6 @@ class _ItineraryPageState extends State<ItineraryPage> {
   String? _error; // Add error state
 
   Future<void> _fetchAttractions() async {
-    // Renamed from _fetchFlights for clarity
     final uri = Uri.parse('http://10.0.2.2:3000/api/attraction');
 
     setState(() {
@@ -45,7 +45,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Failed to load attractions: $e';
+        _error = 'Failed to load attractions: $e'; // Corrected typo here
         _isLoading = false;
       });
       print('Exception fetching attractions: $e');
@@ -55,21 +55,19 @@ class _ItineraryPageState extends State<ItineraryPage> {
   @override
   void initState() {
     super.initState();
-    _fetchAttractions(); // Call the renamed fetch method
+    _fetchAttractions();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attractions in Singapore'), // More descriptive title
-        backgroundColor: Colors.deepPurple, // Example AppBar color
-        foregroundColor: Colors.white, // Text color
+        title: const Text('Attractions in Singapore'),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            ) // Show loading spinner
+          ? const Center(child: CircularProgressIndicator())
           : _error != null
           ? Center(
               child: Text(
@@ -77,153 +75,187 @@ class _ItineraryPageState extends State<ItineraryPage> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.red, fontSize: 16),
               ),
-            ) // Show error message
+            )
           : _attractions.isEmpty
           ? const Center(child: Text('No attractions found.'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(12.0),
-              itemCount: _attractions.length,
-              itemBuilder: (context, index) {
-                final attraction = _attractions[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 10.0),
-                  elevation: 6, // Add shadow for depth
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      15.0,
-                    ), // Rounded corners
-                  ),
-                  child: InkWell(
-                    // Make the entire card tappable
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ItineraryDetailPage(attraction: attraction.slug),
+          : Column(
+              // <--- Column to arrange list and button vertically
+              children: [
+                Expanded(
+                  // <--- Expanded makes the ListView take available space
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(12.0),
+                    itemCount: _attractions.length,
+                    itemBuilder: (context, index) {
+                      final attraction = _attractions[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 10.0),
+                        elevation: 6,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
                         ),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Large Image Display
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(15.0),
-                          ),
-                          child: Image.network(
-                            attraction.image.isNotEmpty
-                                ? attraction.image
-                                : 'https://via.placeholder.com/400x200?text=No+Image+Available', // Placeholder
-                            height: 200, // Fixed height for images
-                            width: double.infinity, // Take full width
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 200,
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.broken_image,
-                                    size: 60,
-                                    color: Colors.grey,
-                                  ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ItineraryDetailPage(
+                                  attraction: attraction.slug,
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
+                              ),
+                            );
+                          },
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Attraction Name (Large and Bold)
-                              Text(
-                                attraction.name,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors
-                                      .deepPurple, // Primary color for name
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(15.0),
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Short Description (Clear, maybe slightly lighter)
-                              Text(
-                                attraction.shortDescription,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.grey[700],
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Price (Prominent)
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  '${attraction.price} SGD', // Assuming price is a string from API now
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green, // Highlight price
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              // View Details Button
-                              SizedBox(
-                                width: double.infinity, // Full width button
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ItineraryDetailPage(
-                                              attraction: attraction.slug,
-                                            ),
+                                child: Image.network(
+                                  attraction.image.isNotEmpty
+                                      ? attraction.image
+                                      : 'https://via.placeholder.com/400x200?text=No+Image+Available',
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      height: 200,
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 60,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     );
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Colors.deepPurpleAccent, // Button color
-                                    foregroundColor:
-                                        Colors.white, // Button text color
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      attraction.name,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      attraction.shortDescription,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey[700],
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    elevation: 4,
-                                  ),
-                                  child: const Text(
-                                    'View Details',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                    const SizedBox(height: 12),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Text(
+                                        '${attraction.price} SGD',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 16),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ItineraryDetailPage(
+                                                    attraction: attraction.slug,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              Colors.deepPurpleAccent,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          elevation: 4,
+                                        ),
+                                        child: const Text(
+                                          'View Details',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      );
+                    },
+                  ),
+                ),
+                // --- NEW BUTTON TO BOOK FLIGHT ---
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity, // Makes the button full width
+                    height: 55, // Fixed height for the button
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ArrivalFlightPage(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors
+                            .orange, // Distinct color for the flight button
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            12,
+                          ), // Rounded corners
+                        ),
+                        elevation: 5, // Add a slight shadow
+                      ),
+                      child: const Text(
+                        'Go to Book Flight',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                );
-              },
+                ),
+              ],
             ),
     );
   }

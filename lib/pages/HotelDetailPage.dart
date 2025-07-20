@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/HotelDetailModel.dart'; // Ensure this file exists and matches your model
+import 'ItineraryPage.dart'; // Import your ItineraryPage
 
 class HotelDetailPage extends StatefulWidget {
   final String hotelID;
@@ -235,7 +236,6 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                         height: 55,
                         child: ElevatedButton(
                           onPressed: () async {
-                            // Use 'final' instead of 'const' for runtime computed values
                             final checkoutUri = Uri.parse(
                               'http://10.0.2.2:3000/api/hotels/checkout',
                             );
@@ -251,10 +251,37 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                               );
 
                               if (response.statusCode == 200) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Booking successful! 🎉'),
-                                  ),
+                                // Show success dialog
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text(
+                                        'Booking Confirmed! 🎉',
+                                      ),
+                                      content: const Text(
+                                        'Your hotel booking has been successfully processed.',
+                                      ),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(
+                                              context,
+                                            ).pop(); // Dismiss the dialog
+                                            Navigator.pushReplacement(
+                                              // Use pushReplacement to prevent going back to HotelDetailPage
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ItineraryPage(),
+                                              ),
+                                            );
+                                          },
+                                          child: const Text('Go to Itinerary'),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(

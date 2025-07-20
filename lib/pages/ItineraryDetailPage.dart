@@ -59,7 +59,10 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ItineraryBookingPage(slug: widget.attraction),
+        builder: (context) => ItineraryBookingPage(
+          slug: widget.attraction,
+          price: _detail!.price,
+        ),
       ),
     );
   }

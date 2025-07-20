@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/FlightDetailModel.dart'; // Ensure your FlightDetail class is here
 import 'dart:math';
+import 'HotelPage.dart'; // Import your HotelPage
 
 class DepartureFlightDetailPage extends StatefulWidget {
   final String flightDetail;
@@ -95,10 +96,9 @@ class _DepartureFlightDetailPageState extends State<DepartureFlightDetailPage> {
                           _infoRow('Price:', '\$${flight.price}', isBold: true),
                           _infoRow(
                             'Cabin Class:',
-                            '\$${flight.cabinClass}',
+                            '${flight.cabinClass}', // Removed '$' as cabinClass is not a price
                             isBold: true,
                           ),
-
                           const SizedBox(height: 20),
                           Center(
                             child: ElevatedButton(
@@ -116,14 +116,24 @@ class _DepartureFlightDetailPageState extends State<DepartureFlightDetailPage> {
                                 showDialog(
                                   context: context,
                                   builder: (_) => AlertDialog(
-                                    title: Text('Booking Confirmed'),
+                                    title: Text('Booking Successful! ✅'),
                                     content: Text(
-                                      'You have booked the flight with token: ${flight.token}',
+                                      'Your flight has been successfully booked.',
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: Text('OK'),
+                                        onPressed: () {
+                                          Navigator.pop(
+                                            context,
+                                          ); // Dismiss the dialog
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => HotelPage(),
+                                            ),
+                                          );
+                                        },
+                                        child: Text('Proceed to Hotel Booking'),
                                       ),
                                     ],
                                   ),
@@ -189,7 +199,9 @@ class _DepartureFlightDetailPageState extends State<DepartureFlightDetailPage> {
     );
 
     try {
-      String secretKey = generateSecretKey(16);
+      String secretKey = generateSecretKey(
+        16,
+      ); // This variable is not used after generation
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -201,6 +213,9 @@ class _DepartureFlightDetailPageState extends State<DepartureFlightDetailPage> {
           'arrivalTime': arrivalTime,
           'pricePerPax': price,
           'cabinClass': cabin,
+          // You might want to include 'pax' and 'totalPrice' in the checkout body
+          // 'pax': pax,
+          // 'totalPrice': totalPrice,
         }),
       );
 
