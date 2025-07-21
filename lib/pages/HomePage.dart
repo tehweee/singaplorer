@@ -185,15 +185,7 @@ class _HomePageState extends State<HomePage> {
                                   _buildMenuOption(
                                     icon: Icons.map,
                                     label: 'Maps',
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const GoogleMapData(),
-                                        ),
-                                      );
-                                    },
+                                    onTap: () {},
                                   ),
                                   _buildMenuOption(
                                     icon: Icons.visibility,

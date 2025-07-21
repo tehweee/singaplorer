@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart'; // Required for date and currency formatting
 
+// Placeholder for your GoogleMapData page
+import 'GoogleMapPage.dart'; // Create this file
+
 class ManualPlanPage extends StatefulWidget {
   @override
   _ManualPlanPageState createState() => _ManualPlanPageState();
@@ -358,6 +361,14 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                               "Total Price:",
                               _formatCurrency(item['hotel']['totalPrice']),
                             ),
+                            _buildDetailText(
+                              "Latitude:",
+                              item['hotel']['latitude'],
+                            ),
+                            _buildDetailText(
+                              "Longitude:",
+                              item['hotel']['longitude'],
+                            ),
                           ] else
                             const Text(
                               "No hotel details available.",
@@ -405,6 +416,14 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                                       attr['description'],
                                       maxLines: 3,
                                     ),
+                                    _buildIndentedDetailText(
+                                      "Latitude:",
+                                      attr['latitude'],
+                                    ),
+                                    _buildIndentedDetailText(
+                                      "Longitude:",
+                                      attr['longitude'],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -417,6 +436,38 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                                 color: Colors.grey,
                               ),
                             ),
+                          const SizedBox(height: 20),
+
+                          // New: Button to view on map
+                          Center(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        GoogleMapData(itinerary: item),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.map, color: Colors.white),
+                              label: const Text(
+                                'View on Map',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Colors.teal, // Attractive color
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
