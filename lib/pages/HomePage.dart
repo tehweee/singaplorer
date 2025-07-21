@@ -9,6 +9,7 @@ import 'AIChatPage.dart';
 import 'DepartureFlightPage.dart';
 import 'AboutUs.dart';
 import 'HotelPage.dart';
+import 'ManualPlanPage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -202,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const AiChatPage(),
+                                              ManualPlanPage(),
                                         ),
                                       );
                                     },
