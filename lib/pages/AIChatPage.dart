@@ -354,19 +354,49 @@ Please update or respond accordingly.
                   if (tokenCount >= 3) {
                     return IconButton(
                       icon: Icon(
-                        message.isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color: message.isFavorite ? Colors.red : Colors.grey,
+                        message.isFavorite ? Icons.star : Icons.star_border,
+                        color: message.isFavorite
+                            ? const Color.fromARGB(255, 255, 196, 0)
+                            : Colors.grey,
                         size: 20,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          message.isFavorite = !message.isFavorite;
-                        });
-                        print("Favorite toggled: ${message.isFavorite}");
-                        sendAIChatToServer(message.text);
-                      },
+                      onPressed: message.isFavorite
+                          ? null // Disable the button if already favorited
+                          : () async {
+                              bool? confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: Text('Confirm saving message?'),
+                                    content: Text(
+                                      'Do you want to save this itinerary?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: Text('Cancel'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        child: Text('Confirm'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (confirmed == true) {
+                                setState(() {
+                                  message.isFavorite = true;
+                                });
+                                print(
+                                  "Favorite toggled: ${message.isFavorite}",
+                                );
+                                sendAIChatToServer(message.text);
+                              }
+                            },
                       padding: const EdgeInsets.only(top: 4),
                       constraints: const BoxConstraints(),
                       visualDensity: VisualDensity.compact,
