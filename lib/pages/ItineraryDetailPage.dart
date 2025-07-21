@@ -370,38 +370,25 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
                                   );
                                 },
                               ),
-                        const SizedBox(height: 24),
-                        Center(
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _goToBookingPage,
-                              icon: const Icon(Icons.confirmation_num_rounded),
-                              label: const Text(
-                                'Book Your Itinerary Now',
-                                style: TextStyle(fontSize: 18),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepOrangeAccent,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 5,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _goToBookingPage,
+        icon: const Icon(Icons.confirmation_num_rounded),
+        label: const Text(
+          'Book Your Itinerary Now',
+          style: TextStyle(fontSize: 18),
+        ),
+        backgroundColor: Colors.deepOrangeAccent,
+        foregroundColor: Colors.white,
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
