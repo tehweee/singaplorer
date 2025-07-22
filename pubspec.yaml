@@ -44,6 +44,7 @@ dependencies:
   flutter_stripe: ^10.1.1
   intl: ^0.19.0
   table_calendar: ^3.0.9
+  syncfusion_flutter_datepicker: ^26.1.40 # Add this line
 
 dev_dependencies:
   flutter_test:

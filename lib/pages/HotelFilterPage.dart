@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_datepicker/datepicker.dart'; // Import SfDateRangePicker
 
 class HotelFilterPage extends StatefulWidget {
   final String initialArrivalDate;
@@ -30,8 +31,29 @@ class _HotelFilterPageState extends State<HotelFilterPage> {
   @override
   void initState() {
     super.initState();
+    // Parse initial dates
     _selectedArrivalDate = DateTime.tryParse(widget.initialArrivalDate);
     _selectedDepartureDate = DateTime.tryParse(widget.initialDepartureDate);
+
+    // Ensure initialArrivalDate is not before today
+    if (_selectedArrivalDate != null &&
+        _selectedArrivalDate!.isBefore(DateTime.now())) {
+      _selectedArrivalDate = DateTime.now();
+    }
+    // Ensure initialDepartureDate is not before today or initialArrivalDate
+    if (_selectedDepartureDate != null &&
+        _selectedDepartureDate!.isBefore(DateTime.now())) {
+      _selectedDepartureDate = DateTime.now().add(
+        const Duration(days: 1),
+      ); // Default to tomorrow
+    }
+    if (_selectedArrivalDate != null &&
+        _selectedDepartureDate != null &&
+        _selectedDepartureDate!.isBefore(_selectedArrivalDate!)) {
+      _selectedDepartureDate = _selectedArrivalDate!.add(
+        const Duration(days: 1),
+      ); // Default to day after arrival
+    }
 
     // Parse initial min/max prices for the slider, defaulting if invalid
     double initialMin = double.tryParse(widget.initialMinPrice) ?? 0;
@@ -40,45 +62,6 @@ class _HotelFilterPageState extends State<HotelFilterPage> {
       initialMin.clamp(0, 10000),
       initialMax.clamp(0, 10000),
     );
-  }
-
-  Future<void> _selectDateRange(BuildContext context) async {
-    final picked = await showDateRangePicker(
-      context: context,
-      initialEntryMode: DatePickerEntryMode.calendarOnly,
-      initialDateRange:
-          (_selectedArrivalDate != null && _selectedDepartureDate != null)
-          ? DateTimeRange(
-              start: _selectedArrivalDate!,
-              end: _selectedDepartureDate!,
-            )
-          : null,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(
-        const Duration(days: 365 * 2),
-      ), // Allow 2 years from now
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).primaryColor, // Your accent color
-              onPrimary: Colors.white, // Text color on primary
-              surface: Colors.white, // Surface color of the dialog
-              onSurface: Colors.black, // Text color on surface
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedArrivalDate = picked.start;
-        _selectedDepartureDate = picked.end;
-      });
-    }
   }
 
   @override
@@ -90,27 +73,7 @@ class _HotelFilterPageState extends State<HotelFilterPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListTile(
-              title: const Text('Arrival Date'),
-              subtitle: Text(
-                _selectedArrivalDate == null
-                    ? 'Select Date'
-                    : DateFormat('yyyy-MM-dd').format(_selectedArrivalDate!),
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDateRange(context),
-            ),
-            ListTile(
-              title: const Text('Departure Date'),
-              subtitle: Text(
-                _selectedDepartureDate == null
-                    ? 'Select Date'
-                    : DateFormat('yyyy-MM-dd').format(_selectedDepartureDate!),
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectDateRange(context),
-            ),
-            const SizedBox(height: 20),
+            // Price Range at the top
             const Text(
               'Price Range',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -137,6 +100,75 @@ class _HotelFilterPageState extends State<HotelFilterPage> {
                 children: [
                   Text('Min: \$${_selectedPriceRange.start.round()}'),
                   Text('Max: \$${_selectedPriceRange.end.round()}'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // In-line Date Range Picker for Date Range Selection with highlighting
+            const Text(
+              'Select Date Range',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: SfDateRangePicker(
+                view: DateRangePickerView.month, // Display month view
+                selectionMode: DateRangePickerSelectionMode
+                    .range, // Enable range selection
+                initialSelectedRange:
+                    (_selectedArrivalDate != null &&
+                        _selectedDepartureDate != null)
+                    ? PickerDateRange(
+                        _selectedArrivalDate,
+                        _selectedDepartureDate,
+                      )
+                    : null,
+                minDate: DateTime.now(), // First selectable date
+                maxDate: DateTime.now().add(
+                  const Duration(days: 365 * 2),
+                ), // Last selectable date (2 years from now)
+                onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
+                  setState(() {
+                    if (args.value is PickerDateRange) {
+                      _selectedArrivalDate = args.value.startDate;
+                      _selectedDepartureDate = args.value.endDate;
+                    }
+                  });
+                },
+                monthViewSettings: const DateRangePickerMonthViewSettings(
+                  showTrailingAndLeadingDates:
+                      true, // Show dates from prev/next month
+                ),
+                headerStyle: DateRangePickerHeaderStyle(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  textAlign: TextAlign.center,
+                  textStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                selectionTextStyle: const TextStyle(color: Colors.white),
+                rangeTextStyle: const TextStyle(color: Colors.white),
+                startRangeSelectionColor: Theme.of(context).primaryColor,
+                endRangeSelectionColor: Theme.of(context).primaryColor,
+                rangeSelectionColor: Theme.of(context).primaryColor.withOpacity(
+                  0.3,
+                ), // Highlight color for the range
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Arrival: ${_selectedArrivalDate == null ? 'N/A' : DateFormat('yyyy-MM-dd').format(_selectedArrivalDate!)}',
+                  ),
+                  Text(
+                    'Departure: ${_selectedDepartureDate == null ? 'N/A' : DateFormat('yyyy-MM-dd').format(_selectedDepartureDate!)}',
+                  ),
                 ],
               ),
             ),
