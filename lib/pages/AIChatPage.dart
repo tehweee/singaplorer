@@ -17,6 +17,7 @@ class AIChatPage extends StatefulWidget {
 class _AIChatPageState extends State<AIChatPage> {
   final Gemini gemini = Gemini.instance;
   List<ChatMessage> messages = [];
+  bool _isProcessingPayment = false;
 
   ChatUser currentUser = ChatUser(id: "0", firstName: "User");
   ChatUser geminiUser = ChatUser(id: "1", firstName: "Gemini");
@@ -279,6 +280,11 @@ Please update or respond accordingly.
   }
 
   void handlePayment() async {
+    if (_isProcessingPayment) return; // Prevent re-entry
+    setState(() {
+      _isProcessingPayment = true;
+    });
+
     final result = await makePayment();
 
     if (!mounted) return;
@@ -314,6 +320,11 @@ Please update or respond accordingly.
           SnackBar(content: Text('Something went wrong. Please try again.')),
         );
         break;
+    }
+    if (mounted) {
+      setState(() {
+        _isProcessingPayment = false;
+      });
     }
   }
 
@@ -418,8 +429,12 @@ Please update or respond accordingly.
                   } else {
                     // Not enough tokens and not favorited: show monetization icon
                     return IconButton(
-                      icon: Icon(Icons.monetization_on, size: 20),
-                      onPressed: handlePayment,
+                      icon: Icon(
+                        Icons.monetization_on,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
+                      onPressed: _isProcessingPayment ? null : handlePayment,
                       padding: const EdgeInsets.only(top: 4),
                       constraints: const BoxConstraints(),
                       visualDensity: VisualDensity.compact,
