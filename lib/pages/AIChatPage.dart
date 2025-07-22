@@ -317,6 +317,19 @@ Please update or respond accordingly.
     }
   }
 
+  void consumeToken() async {
+    final url = Uri.parse('http://10.0.2.2:3000/api/consumeAiToken');
+    final response = await http.put(url);
+    if (response.statusCode == 200) {
+      jsonDecode(response.body);
+      setState(() {
+        _tokenFuture = aiTokenCheck();
+      });
+    } else {
+      jsonDecode(response.body);
+    }
+  }
+
   Widget _buildMessage(ChatMessage message) {
     final isAI = message.user.id == geminiUser.id;
 
@@ -339,73 +352,77 @@ Please update or respond accordingly.
               future: aiTokenCheck(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  // While loading, show a placeholder icon or nothing
                   return SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   );
                 } else if (snapshot.hasError) {
-                  // On error, show an error icon or nothing
                   return Icon(Icons.error, color: Colors.red, size: 20);
                 } else {
                   final tokenCount = snapshot.data ?? 0;
-                  // Only show favorite icon if tokenCount >= 3
-                  if (tokenCount >= 3) {
+
+                  if (message.isFavorite) {
+                    // Always show yellow star if already favorited
+                    return Icon(
+                      Icons.star,
+                      color: const Color.fromARGB(255, 255, 196, 0),
+                      size: 20,
+                    );
+                  } else if (tokenCount >= 3) {
+                    // Show gray star (can favorite)
                     return IconButton(
                       icon: Icon(
-                        message.isFavorite ? Icons.star : Icons.star_border,
-                        color: message.isFavorite
-                            ? const Color.fromARGB(255, 255, 196, 0)
-                            : Colors.grey,
+                        Icons.star_border,
+                        color: Colors.grey,
                         size: 20,
                       ),
-                      onPressed: message.isFavorite
-                          ? null // Disable the button if already favorited
-                          : () async {
-                              bool? confirmed = await showDialog<bool>(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text('Confirm saving message?'),
-                                    content: Text(
-                                      'Do you want to save this itinerary?',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: Text('Cancel'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: Text('Confirm'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
+                      onPressed: () async {
+                        bool? confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text('Confirm saving message?'),
+                              content: Text(
+                                'Do you want to save this itinerary?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: Text('Confirm'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
 
-                              if (confirmed == true) {
-                                setState(() {
-                                  message.isFavorite = true;
-                                });
-                                print(
-                                  "Favorite toggled: ${message.isFavorite}",
-                                );
-                                sendAIChatToServer(message.text);
-                              }
-                            },
+                        if (confirmed == true) {
+                          setState(() {
+                            message.isFavorite = true;
+                          });
+                          print("Favorite toggled: ${message.isFavorite}");
+                          sendAIChatToServer(message.text);
+                          consumeToken();
+                        }
+                      },
                       padding: const EdgeInsets.only(top: 4),
                       constraints: const BoxConstraints(),
                       visualDensity: VisualDensity.compact,
                     );
                   } else {
-                    // If tokenCount < 3, you can return a locked icon or no icon
+                    // Not enough tokens and not favorited: show monetization icon
                     return IconButton(
-                      icon: Icon(Icons.monetization_on),
+                      icon: Icon(Icons.monetization_on, size: 20),
                       onPressed: handlePayment,
+                      padding: const EdgeInsets.only(top: 4),
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
                     );
                   }
                 }
