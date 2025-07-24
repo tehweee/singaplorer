@@ -1,10 +1,12 @@
-import 'dart:convert';
+// ArrivalFlightDetailPage.dart
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:profile_test_isp/pages/HomePage.dart';
 import '../models/FlightDetailModel.dart'; // Ensure your FlightDetail class is here
 import 'dart:math';
+import 'package:intl/intl.dart'; // Import for date formatting
+import 'HomePage.dart'; // Import your HomePage - assuming this is where the user goes after booking arrival
 
 class ArrivalFlightDetailPage extends StatefulWidget {
   final String flightDetail;
@@ -25,6 +27,7 @@ class ArrivalFlightDetailPage extends StatefulWidget {
 
 class _ArrivalFlightDetailPageState extends State<ArrivalFlightDetailPage> {
   List<FlightDetail> _flightDetail = [];
+  bool _isLoading = true; // Added loading state
 
   @override
   void initState() {
@@ -33,6 +36,10 @@ class _ArrivalFlightDetailPageState extends State<ArrivalFlightDetailPage> {
   }
 
   Future<void> _fetchFlights() async {
+    setState(() {
+      _isLoading = true; // Set loading to true when fetching starts
+    });
+
     final encodedToken = Uri.encodeComponent(widget.flightDetail);
 
     final uri = Uri.parse(
@@ -51,132 +58,271 @@ class _ArrivalFlightDetailPageState extends State<ArrivalFlightDetailPage> {
           _flightDetail = [FlightDetail.fromJson(data['data'])]; // wrap in list
         });
       } else {
+        // Handle error: show a message to the user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to load flight detail: ${response.statusCode}',
+            ),
+          ),
+        );
         throw Exception('Failed to load flight detail');
       }
     } catch (e) {
       print('Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching flight details: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading =
+            false; // Set loading to false regardless of success or failure
+      });
+    }
+  }
+
+  // Helper function to format the date and time string (e.g., "Jul 25, 2025 at 4:10 PM")
+  String _formatDateTime(String dateTimeString) {
+    try {
+      final dateTime = DateTime.parse(dateTimeString);
+      return DateFormat('MMM d, yyyy \'at\' h:mm a').format(dateTime);
+    } catch (e) {
+      print('Error parsing date time: $e');
+      return dateTimeString; // Return original if parsing fails
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Flight Details')),
-      body: _flightDetail.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ListView.builder(
-                itemCount: _flightDetail.length,
-                itemBuilder: (context, index) {
-                  final flight = _flightDetail[index];
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+      appBar: AppBar(
+        title: const Text(
+          'Flight Details',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFFAA0000), // Primary red color
+        iconTheme: const IconThemeData(color: Colors.white), // White back arrow
+      ),
+      body: Container(
+        color: const Color(
+          0xFFAA0000,
+        ), // Red background for the top part of the body
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+          child: Container(
+            color: Colors.white, // White background for the main content area
+            child:
+                _isLoading // Use the loading state
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFAA0000)),
+                  ) // Red indicator
+                : _flightDetail.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No flight details found.',
+                      style: TextStyle(color: Colors.black54),
                     ),
-                    elevation: 4,
-                    margin: EdgeInsets.symmetric(vertical: 10),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _infoRow(
-                            'From:',
-                            '${flight.departureAirport}, ${flight.departureCountry}',
-                          ),
-                          _infoRow(
-                            'To:',
-                            '${flight.arrivalAirport}, ${flight.arrivalCountry}',
-                          ),
-                          const SizedBox(height: 10),
-                          _infoRow('Departure Time:', flight.departureTime),
-                          _infoRow('Arrival Time:', flight.arrivalTime),
-                          const SizedBox(height: 10),
-                          _infoRow('Price:', '\$${flight.price}', isBold: true),
-                          _infoRow(
-                            'Cabin Class:',
-                            '${flight.cabinClass}', // Removed '$' as cabinClass is not a price
-                            isBold: true,
-                          ),
-                          const SizedBox(height: 20),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _checkout(
-                                  flight.departureCountry,
-                                  flight.departureAirport,
-                                  flight.departureTime,
-                                  flight.arrivalTime,
-                                  flight.price,
-                                  flight.cabinClass,
-                                  widget.pax,
-                                  widget.totalPrice,
-                                );
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: Text('Booking Successful! ✅'),
-                                    content: Text(
-                                      'Your flight has been successfully booked.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(
-                                            context,
-                                          ); // Dismiss the dialog
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => HomePage(),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(
+                      16.0,
+                    ), // Padding around the list
+                    itemCount: _flightDetail.length,
+                    itemBuilder: (context, index) {
+                      final flight = _flightDetail[index];
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            15,
+                          ), // Slightly more rounded corners
+                        ),
+                        elevation: 8, // Increased elevation for more pop
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 4,
+                        ), // Adjusted margin
+                        child: Padding(
+                          padding: const EdgeInsets.all(
+                            20.0,
+                          ), // Increased padding inside card
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Flight departure/arrival information (Bold and bigger)
+                              _buildFlightLocationRow(
+                                flight.departureAirport,
+                                flight.departureCountry,
+                                flight.arrivalAirport,
+                                flight.arrivalCountry,
+                              ),
+                              const Divider(
+                                height: 30, // More space after airports
+                                thickness: 1,
+                                color: Colors.grey,
+                              ), // Separator
+                              // Display formatted date and time
+                              _infoRow(
+                                'Departure:',
+                                _formatDateTime(flight.departureTime),
+                              ),
+                              _infoRow(
+                                'Arrival:',
+                                _formatDateTime(flight.arrivalTime),
+                              ),
+                              const SizedBox(height: 15),
+                              _infoRow(
+                                'Price:',
+                                '\$${double.parse(flight.price).toStringAsFixed(2)}',
+                                isBold: true,
+                                valueColor: const Color(0xFFAA0000),
+                              ), // Format price, make red
+                              _infoRow(
+                                'Cabin Class:',
+                                flight.cabinClass.replaceAll(
+                                  '_',
+                                  ' ',
+                                ), // Make cabin class more readable
+                                isBold: true,
+                                valueColor: Colors
+                                    .deepOrange, // A different accent color for cabin
+                              ),
+                              _infoRow(
+                                'Passengers:',
+                                widget.pax,
+                              ), // Display pax from widget
+                              _infoRow(
+                                'Total Price:',
+                                '\$${double.parse(widget.totalPrice).toStringAsFixed(2)}',
+                                isBold: true,
+                                valueColor: const Color(0xFFAA0000),
+                              ), // Display total price
+                              const SizedBox(
+                                height: 30,
+                              ), // More space before button
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _checkout(
+                                      flight.departureCountry,
+                                      flight.departureAirport,
+                                      flight
+                                          .departureTime, // Send original string to backend
+                                      flight
+                                          .arrivalTime, // Send original string to backend
+                                      flight.price,
+                                      flight.cabinClass,
+                                      widget.pax,
+                                      widget.totalPrice,
+                                    );
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text(
+                                          'Booking Successful! ✅',
+                                          style: TextStyle(
+                                            color: Color(0xFFAA0000),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        content: const Text(
+                                          'Your flight has been successfully booked.',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(
+                                                context,
+                                              ); // Dismiss the dialog
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      HomePage(), // Navigates to HomePage after arrival flight booking
+                                                ),
+                                              );
+                                            },
+                                            child: const Text(
+                                              'Return to Home',
+                                              style: TextStyle(
+                                                color: Color(0xFFAA0000),
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          );
-                                        },
-                                        child: Text('Proceed to Hotel Booking'),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(
+                                      0xFFAA0000,
+                                    ), // Red button
+                                    foregroundColor: Colors.white, // White text
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 30,
+                                      vertical: 15,
+                                    ), // More padding
+                                    textStyle: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ), // Larger, bolder text
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    elevation: 5,
                                   ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 14,
-                                ),
-                                textStyle: TextStyle(fontSize: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  child: const Text(
+                                    'Book Flight',
+                                  ), // Changed text to be more explicit
                                 ),
                               ),
-                              child: Text('Book Officially'),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _infoRow(String label, String value, {bool isBold = false}) {
+  Widget _infoRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? valueColor,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(
+        vertical: 6.0,
+      ), // Increased vertical padding for more space
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold, // Make label bold
+              fontSize: 16, // Slightly larger label font
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 12), // Increased space between label and value
           Expanded(
             child: Text(
               value,
               style: TextStyle(
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                fontSize: 16,
+                fontSize: 18, // Bigger value font
+                color: valueColor ?? Colors.black87,
               ),
+              textAlign: TextAlign.right, // Align value to the right
             ),
           ),
         ],
@@ -184,22 +330,88 @@ class _ArrivalFlightDetailPageState extends State<ArrivalFlightDetailPage> {
     );
   }
 
+  // Updated widget for origin and destination with bigger and bolder text
+  Widget _buildFlightLocationRow(
+    String departureAirport,
+    String departureCountry,
+    String arrivalAirport,
+    String arrivalCountry,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.flight_takeoff,
+              color: Color(0xFFAA0000),
+              size: 28, // Bigger icon
+            ),
+            const SizedBox(width: 12), // More space
+            Expanded(
+              child: Text(
+                '$departureAirport, $departureCountry',
+                style: const TextStyle(
+                  fontSize: 20, // Bigger airport/country text
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+          child: Text(
+            'to',
+            style: TextStyle(
+              fontSize: 16, // Slightly bigger 'to'
+              color: Colors.grey, // More subtle 'to' color
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            const Icon(
+              Icons.flight_land,
+              color: Color(0xFFAA0000),
+              size: 28,
+            ), // Bigger icon
+            const SizedBox(width: 12), // More space
+            Expanded(
+              child: Text(
+                '$arrivalAirport, $arrivalCountry',
+                style: const TextStyle(
+                  fontSize: 20, // Bigger airport/country text
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   void _checkout(
-    country,
-    airport,
-    departTime,
-    arrivalTime,
-    price,
-    cabin,
-    pax,
-    totalPrice,
+    String country,
+    String airport,
+    String departTime, // This remains the original string for backend
+    String arrivalTime, // This remains the original string for backend
+    String price,
+    String cabin,
+    String pax,
+    String totalPrice,
   ) async {
     final uri = Uri.parse('http://10.0.2.2:3000/api/arrive/flights/checkout');
 
     try {
-      String secretKey = generateSecretKey(
-        16,
-      ); // This variable is not used after generation
+      String secretKey = generateSecretKey(16);
+
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -211,16 +423,26 @@ class _ArrivalFlightDetailPageState extends State<ArrivalFlightDetailPage> {
           'arrivalTime': arrivalTime,
           'pricePerPax': price,
           'cabinClass': cabin,
-          // You might want to include 'pax' and 'totalPrice' in the checkout body
-          // 'pax': pax,
-          // 'totalPrice': totalPrice,
+          'pax': pax, // Included pax
+          'totalPrice': totalPrice, // Included totalPrice
         }),
       );
 
       print('Checkout response status: ${response.statusCode}');
       print('Checkout response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('Checkout successful!');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Checkout failed: ${response.statusCode}')),
+        );
+      }
     } catch (e) {
       print('Checkout error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error during checkout: $e')));
     }
   }
 

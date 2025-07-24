@@ -16,6 +16,12 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
   bool _isLoading = true;
   String _errorMessage = '';
 
+  // Define the new color constants
+  static const Color primaryRed = Color(0xFF780000);
+  static const Color accentRed = Color(
+    0xFFB11204,
+  ); // A slightly lighter red for accents
+
   // Base URL for the backend API
   static const String _baseUrl =
       'http://10.0.2.2:3000'; // Change to your real backend URL
@@ -158,7 +164,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
       appBar: AppBar(
         title: const Text("User Itineraries"),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent, // Added a background color
+        backgroundColor: primaryRed, // Changed color to primaryRed
         foregroundColor: Colors.white, // Text color for app bar
       ),
       body: _isLoading
@@ -166,7 +172,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  CircularProgressIndicator(color: primaryRed), // Changed color
                   SizedBox(height: 10),
                   Text('Loading itineraries...'),
                 ],
@@ -181,7 +187,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                   children: [
                     const Icon(
                       Icons.error_outline,
-                      color: Colors.red,
+                      color: primaryRed, // Changed color
                       size: 60,
                     ),
                     const SizedBox(height: 20),
@@ -189,7 +195,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                       _errorMessage,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Colors.red,
+                        color: primaryRed, // Changed color
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
                       ),
@@ -200,7 +206,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                       icon: const Icon(Icons.refresh),
                       label: const Text('Try Again'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: primaryRed, // Changed color
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -222,12 +228,19 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blueGrey, size: 60),
+                    Icon(
+                      Icons.info_outline,
+                      color: primaryRed,
+                      size: 60,
+                    ), // Changed color
                     SizedBox(height: 20),
                     Text(
                       "It looks like you haven't planned any itineraries yet. Let's start planning your amazing trip!",
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, color: Colors.blueGrey),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: primaryRed,
+                      ), // Changed color
                     ),
                   ],
                 ),
@@ -265,7 +278,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
+                                  color: primaryRed, // Changed color
                                 ),
                               ),
                             ),
@@ -396,7 +409,8 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
-                                        color: Colors.indigo,
+                                        color:
+                                            accentRed, // Changed color to accentRed
                                       ), // Darker, bolder title
                                     ),
                                     _buildIndentedDetailText(
@@ -457,7 +471,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    Colors.teal, // Attractive color
+                                    accentRed, // Changed color to accentRed
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -487,7 +501,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
           Icon(
             icon,
             size: 24,
-            color: Colors.blueAccent,
+            color: primaryRed, // Changed color to primaryRed
           ), // Larger, more prominent icon
           const SizedBox(width: 10),
           Text(
@@ -495,7 +509,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 20, // Larger font size for headers
-              color: Colors.blueAccent,
+              color: primaryRed, // Changed color to primaryRed
             ),
           ),
         ],

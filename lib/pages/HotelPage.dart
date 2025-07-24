@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'HotelDetailPage.dart';
+import 'HotelDetailPage.dart'; // Ensure this is correctly imported
 import '../models/HotelModel.dart'; // Ensure this file contains the Hotel model
 import 'HotelFilterPage.dart'; // Import the FilterPage
 
@@ -13,7 +13,7 @@ class HotelPage extends StatefulWidget {
 }
 
 class _HotelPageState extends State<HotelPage> {
-  List<Hotel> _hotel = [];
+  List<Hotel> _hotels = [];
 
   // Default filter values
   String _arrivalDate = '2025-07-20';
@@ -47,14 +47,13 @@ class _HotelPageState extends State<HotelPage> {
         final hotels = List<Map<String, dynamic>>.from(data['data'] ?? []);
 
         setState(() {
-          _hotel = hotels.map((item) => Hotel.fromJson(item)).toList();
+          _hotels = hotels.map((item) => Hotel.fromJson(item)).toList();
         });
       } else {
         throw Exception('Failed to load hotels');
       }
     } catch (e) {
       print('Exception: $e');
-      // Optionally show a user-friendly error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to load hotels. Please try again later.'),
@@ -90,183 +89,187 @@ class _HotelPageState extends State<HotelPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search Hotels')),
-      body: _hotel.isEmpty
+      appBar: AppBar(
+        title: const Text('Book Hotel'),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFB11204), // Red color from your design
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: _hotels.isEmpty
           ? const Center(child: Text('No hotels found'))
           : ListView.builder(
-              itemCount: _hotel.length,
+              itemCount: _hotels.length,
               itemBuilder: (context, index) {
-                final hotel = _hotel[index];
+                final hotel = _hotels[index];
                 final formattedPrice = hotel.priceGross.toStringAsFixed(2);
                 final imageUrl = hotel.imageUrls.isNotEmpty
                     ? hotel.imageUrls[0]
-                    : 'https://placehold.co/600x400/E0E0E0/000000?text=No+Image'; // Placeholder if no image
+                    : 'https://placehold.co/600x400/E0E0E0/000000?text=No+Image';
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 15,
-                  ),
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hotel Image
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(15),
+                // Determine if the hotel is a trusted partner (rating >= 9.0)
+                final isTrustedPartner = hotel.reviewScore >= 9.0;
+
+                return GestureDetector(
+                  // Added GestureDetector for tapping
+                  onTap: () {
+                    // *** THIS IS THE CORRECTED PART ***
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HotelDetailPage(
+                          hotelID: hotel.hotelID, // Pass the hotelID
+                          arrivalDate:
+                              _arrivalDate, // Pass the current arrival date
+                          departureDate:
+                              _departureDate, // Pass the current departure date
                         ),
-                        child: Image.network(
-                          imageUrl,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 15,
+                    ),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.white, Colors.grey[50]!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Hotel Image - Top
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(15),
+                            ),
+                            child: Image.network(
+                              imageUrl,
                               height: 200,
-                              color: Colors.grey[300],
-                              child: const Center(
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: 50,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Hotel Name
-                            Text(
-                              hotel.name,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueGrey,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Price
-                            Text(
-                              'Price: \$$formattedPrice ${hotel.priceCurrency}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.green,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Check-in/Check-out Dates
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.calendar_today,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  '${hotel.checkInDate} to ${hotel.checkOutDate}',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.black87,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 200,
+                                  color: Colors.grey[300],
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                            const SizedBox(height: 4),
-                            // Check-in/Check-out Times
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Check-in: ${hotel.checkInFrom} | Check-out: ${hotel.checkOutFrom}',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            // Star Rating (if available)
-                            if (hotel.starRating > 0)
-                              Row(
-                                children: List.generate(5, (i) {
-                                  return Icon(
-                                    i < hotel.starRating
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: Colors.amber,
-                                    size: 20,
-                                  );
-                                }),
-                              ),
-                            const SizedBox(height: 8),
-                            // Review Score and Count
-                            if (hotel.reviewScore > 0)
-                              Text(
-                                '${hotel.reviewText} (${hotel.reviewScore.toStringAsFixed(1)}/10) - ${hotel.reviewCount} reviews',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      // Details Button at the bottom
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).primaryColor, // Use app's primary color
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 25,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: const Text(
-                              'View Details',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => HotelDetailPage(
-                                    hotelID: hotel.hotelID.toString(),
-                                    arrivalDate: hotel.checkInDate,
-                                    departureDate: hotel.checkOutDate,
-                                  ),
-                                ),
-                              );
-                            },
                           ),
-                        ),
+                          // Hotel Details - Below the image
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Hotel Name
+                                Text(
+                                  hotel.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                // Star Rating
+                                Row(
+                                  children: List.generate(5, (i) {
+                                    return Icon(
+                                      i < hotel.starRating
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: Colors.amber,
+                                      size: 20,
+                                    );
+                                  }),
+                                ),
+                                const SizedBox(height: 4),
+                                // Review Score and Count
+                                if (hotel.reviewScore > 0)
+                                  Text(
+                                    'Exceptional (${hotel.reviewScore.toStringAsFixed(1)}/10) - ${hotel.reviewCount} reviews',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                const SizedBox(height: 8),
+                                // Fast Service
+                                const Text(
+                                  'Fast Service Available',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFFB11204),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                // Trusted Partner with Mascot (Conditional)
+                                if (isTrustedPartner)
+                                  Row(
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/mascot.png',
+                                        height: 24,
+                                        width: 24,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      const Text(
+                                        'Trusted Partner',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(height: 12),
+                                // Price per night - Aligned to bottom
+                                Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Text(
+                                    '\$${formattedPrice} per night',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFB11204),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 );
               },
@@ -275,7 +278,10 @@ class _HotelPageState extends State<HotelPage> {
         onPressed: _openFilterPage,
         icon: const Icon(Icons.filter_list),
         label: const Text('Filter'),
+        backgroundColor: const Color(0xFFB11204),
+        foregroundColor: Colors.white,
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

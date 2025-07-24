@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:profile_test_isp/pages/ItineraryPage.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 // import '../models/ItineraryDateModel.dart'; // Ensure this path is correct
@@ -174,31 +175,27 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Confirm Booking"),
-        content: Column(
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Attraction: ${widget.slug}"),
-            Text("Selected Date: ${_selectedAvailableDate!}"),
-            Text("Number of People: $_numberOfPeople"),
-            Text(
-              "Total Price: \$${_totalPrice.toStringAsFixed(2)}",
-            ), // Display total price
-            const SizedBox(height: 10),
-            const Text("Proceed with this booking?"),
+            Text("You have booked the itinerary good job!"), // Modified text
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
+          // Removed Cancel button
           TextButton(
             onPressed: () async {
               Navigator.pop(context); // Dismiss dialog
               await _performCheckoutRequest(
                 _selectedAvailableDate!,
                 _numberOfPeople, // Pass the number of people
+              );
+              // Navigate to ItineraryPage after successful checkout
+              if (!mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ItineraryPage()),
               );
             },
             child: const Text("Confirm"),
@@ -253,7 +250,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Select Booking Date"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color(
+          0xFF780000,
+        ), // Changed from Colors.deepPurple
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -294,7 +293,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                                 IconButton(
                                   icon: const Icon(
                                     Icons.remove_circle_outline,
-                                    color: Colors.deepPurple,
+                                    color: Color(
+                                      0xFF780000,
+                                    ), // Changed from Colors.deepPurple
                                     size: 30,
                                   ),
                                   onPressed: () {
@@ -316,7 +317,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                                 IconButton(
                                   icon: const Icon(
                                     Icons.add_circle_outline,
-                                    color: Colors.deepPurple,
+                                    color: Color(
+                                      0xFF780000,
+                                    ), // Changed from Colors.deepPurple
                                     size: 30,
                                   ),
                                   onPressed: () {
@@ -345,7 +348,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      color: Colors.purple.shade50, // Lighter purple background
+                      color: const Color(
+                        0x1A780000,
+                      ), // Lighter red background (approx. 10% opacity of 0xFF780000)
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
@@ -356,7 +361,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple,
+                                color: Color(
+                                  0xFF780000,
+                                ), // Changed from Colors.deepPurple
                               ),
                             ),
                             Text(
@@ -364,7 +371,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.deepOrangeAccent,
+                                color: Color(
+                                  0xFFD32F2F,
+                                ), // A brighter red for emphasis
                               ),
                             ),
                           ],
@@ -409,11 +418,15 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                       ),
                       calendarStyle: CalendarStyle(
                         todayDecoration: BoxDecoration(
-                          color: Colors.deepPurple.withOpacity(0.3),
+                          color: const Color(
+                            0x4D780000,
+                          ), // Red with 30% opacity
                           shape: BoxShape.circle,
                         ),
                         selectedDecoration: const BoxDecoration(
-                          color: Colors.deepPurple,
+                          color: Color(
+                            0xFF780000,
+                          ), // Changed from Colors.deepPurple
                           shape: BoxShape.circle,
                         ),
                         selectedTextStyle: const TextStyle(color: Colors.white),
@@ -441,7 +454,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                   _isLoading
                       ? const Center(
                           child: CircularProgressIndicator(
-                            color: Colors.deepPurple,
+                            color: Color(
+                              0xFF780000,
+                            ), // Changed from Colors.deepPurple
                           ),
                         )
                       : _errorMessage != null
@@ -474,14 +489,18 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                               margin: const EdgeInsets.only(bottom: 10),
                               elevation: 2,
                               color: _selectedAvailableDate == bookingDate.date
-                                  ? Colors.deepPurple.withOpacity(0.1)
+                                  ? const Color(
+                                      0x1A780000,
+                                    ) // Red with 10% opacity
                                   : Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 side: BorderSide(
                                   color:
                                       _selectedAvailableDate == bookingDate.date
-                                      ? Colors.deepPurple
+                                      ? const Color(
+                                          0xFF780000,
+                                        ) // Changed from Colors.deepPurple
                                       : Colors.grey.shade300,
                                   width:
                                       _selectedAvailableDate == bookingDate.date
@@ -495,7 +514,8 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                                   style: const TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.green,
+                                    color: Colors
+                                        .green, // Kept green for "Available" text
                                   ),
                                 ),
                                 value: bookingDate
@@ -504,7 +524,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                                     _selectedAvailableDate, // The currently selected value in the group
                                 onChanged:
                                     _selectAvailableDate, // Callback when this radio button is selected
-                                activeColor: Colors.deepPurple,
+                                activeColor: const Color(
+                                  0xFF780000,
+                                ), // Changed from Colors.deepPurple
                               ),
                             );
                           },
@@ -539,7 +561,9 @@ class _ItineraryBookingPageState extends State<ItineraryBookingPage> {
                   ? _checkout
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrangeAccent,
+                backgroundColor: const Color(
+                  0xFF780000,
+                ), // Changed from Colors.deepOrangeAccent
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(

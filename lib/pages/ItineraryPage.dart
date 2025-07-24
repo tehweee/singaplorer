@@ -16,6 +16,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
   List<Itinerary> _attractions = [];
   bool _isLoading = true; // Add loading state
   String? _error; // Add error state
+  Itinerary? _selectedAttraction; // New: To hold the selected attraction
 
   Future<void> _fetchAttractions() async {
     final uri = Uri.parse('http://10.0.2.2:3000/api/attraction');
@@ -45,7 +46,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Failed to load attractions: $e'; // Corrected typo here
+        _error = 'Failed to load attractions: $e';
         _isLoading = false;
       });
       print('Exception fetching attractions: $e');
@@ -60,14 +61,22 @@ class _ItineraryPageState extends State<ItineraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Define the new color
+    const Color primaryRed = Color(0xFF780000);
+    const Color accentRed = Color(
+      0xFFB11204,
+    ); // A slightly lighter red for contrast/accents
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attractions in Singapore'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: primaryRed, // Changed color
         foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: primaryRed),
+            ) // Changed color
           : _error != null
           ? Center(
               child: Text(
@@ -79,10 +88,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
           : _attractions.isEmpty
           ? const Center(child: Text('No attractions found.'))
           : Column(
-              // <--- Column to arrange list and button vertically
               children: [
                 Expanded(
-                  // <--- Expanded makes the ListView take available space
                   child: ListView.builder(
                     padding: const EdgeInsets.all(12.0),
                     itemCount: _attractions.length,
@@ -93,17 +100,22 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         elevation: 6,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.0),
+                          // New: Add border to indicate selection
+                          side: _selectedAttraction == attraction
+                              ? const BorderSide(
+                                  color: primaryRed,
+                                  width: 2.0,
+                                ) // Changed color
+                              : BorderSide.none,
                         ),
                         child: InkWell(
+                          // New: Set selected attraction on tap
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ItineraryDetailPage(
-                                  attraction: attraction.slug,
-                                ),
-                              ),
-                            );
+                            setState(() {
+                              _selectedAttraction = attraction;
+                            });
+                            // Navigator.push is removed here to prevent immediate navigation
+                            // when selecting. The button below will handle navigation.
                           },
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +156,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                                       style: const TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.deepPurple,
+                                        color: primaryRed, // Changed color
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -167,7 +179,8 @@ class _ItineraryPageState extends State<ItineraryPage> {
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.green,
+                                          color: Colors
+                                              .green, // Keep green for price or change to another suitable color if desired
                                         ),
                                       ),
                                     ),
@@ -175,6 +188,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                                     SizedBox(
                                       width: double.infinity,
                                       child: ElevatedButton(
+                                        // New: Navigate to detail page on View Details button press
                                         onPressed: () {
                                           Navigator.push(
                                             context,
@@ -188,7 +202,7 @@ class _ItineraryPageState extends State<ItineraryPage> {
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
-                                              Colors.deepPurpleAccent,
+                                              accentRed, // Changed color (using accent red for "View Details")
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 12,
@@ -219,13 +233,13 @@ class _ItineraryPageState extends State<ItineraryPage> {
                     },
                   ),
                 ),
-                // --- NEW BUTTON TO BOOK FLIGHT ---
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: SizedBox(
-                    width: double.infinity, // Makes the button full width
-                    height: 55, // Fixed height for the button
+                    width: double.infinity,
+                    height: 55,
                     child: ElevatedButton(
+                      // The button is now enabled because onPressed is not null
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -235,15 +249,12 @@ class _ItineraryPageState extends State<ItineraryPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors
-                            .orange, // Distinct color for the flight button
+                        backgroundColor: accentRed,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            12,
-                          ), // Rounded corners
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        elevation: 5, // Add a slight shadow
+                        elevation: 5,
                       ),
                       child: const Text(
                         'Go to Book Flight',

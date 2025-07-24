@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart'; // For date formatting
 import '../models/HotelDetailModel.dart'; // Ensure this file exists and matches your model
 import 'ItineraryPage.dart'; // Import your ItineraryPage
 
@@ -21,10 +22,10 @@ class HotelDetailPage extends StatefulWidget {
 }
 
 class _HotelDetailPageState extends State<HotelDetailPage> {
-  // CORRECTED: This must be a single HotelDetail object, not a List.
   HotelDetail? _hotelDetail;
   bool _isLoading = true;
   String? _error;
+  int _currentImageIndex = 0; // For tracking the current image in carousel
 
   @override
   void initState() {
@@ -33,39 +34,55 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
   }
 
   Future<void> _fetchDetails() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    // Ensure dates are correctly formatted if your API expects specific formats
+    // Example: 2025-07-25
+    final String formattedArrivalDate = widget.arrivalDate;
+    final String formattedDepartureDate = widget.departureDate;
+
     final uri = Uri.parse(
-      'http://10.0.2.2:3000/api/hotels/detail?hotel_id=${widget.hotelID}&arrival_date=${widget.arrivalDate}&departure_date=${widget.departureDate}',
+      'http://10.0.2.2:3000/api/hotels/detail?hotel_id=${widget.hotelID}&arrival_date=$formattedArrivalDate&departure_date=$formattedDepartureDate',
     );
 
     try {
       final response = await http.get(uri);
+      print('Hotel Detail API Response Status: ${response.statusCode}');
+      print('Hotel Detail API Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // This 'result' is the single Map<String, dynamic> from your Node.js API's 'data' key.
         final result = data['data'];
 
         setState(() {
           if (result != null && result is Map<String, dynamic>) {
-            // CORRECTED: Directly parse the map into the single _hotelDetail object.
             _hotelDetail = HotelDetail.fromJson(result);
+            _isLoading = false;
           } else {
-            // Handle cases where 'data' might be null or not a map
             _error =
                 'Invalid data format or no hotel details found in response.';
+            _isLoading = false;
           }
-          _isLoading = false;
         });
       } else {
-        throw Exception(
-          'Failed to load details: Server responded with status ${response.statusCode}',
+        setState(() {
+          _error =
+              'Failed to load details: Server responded with status ${response.statusCode}';
+          _isLoading = false;
+        });
+        print(
+          'Failed to load hotel details. Status code: ${response.statusCode}, Body: ${response.body}',
         );
       }
     } catch (e) {
       setState(() {
-        _error = 'Failed to load details: $e';
+        _error = 'An error occurred: $e';
         _isLoading = false;
       });
-      print('Error fetching hotel details: $e'); // Log error for debugging
+      print('Error fetching hotel details: $e');
     }
   }
 
@@ -73,38 +90,127 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Hotel Details"),
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: Text(_hotelDetail?.name ?? 'Hotel Details'),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFB11204), // Red brand color
+        foregroundColor: Colors.white, // White text
+        elevation: 0, // No shadow for a cleaner look
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFB11204)),
+            )
           : _error != null
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _fetchDetails,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB11204),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
                 ),
               ),
             )
-          : _hotelDetail ==
-                null // Check if the single object is null after loading
-          ? const Center(child: Text("No hotel details found."))
+          : _hotelDetail == null
+          ? const Center(
+              child: Text(
+                "No hotel details found.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Image Carousel Section
+                  Stack(
+                    children: [
+                      SizedBox(
+                        height: 280, // Increased height for better visual
+                        child: PageView.builder(
+                          itemCount: _hotelDetail!.hotelPhotos.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentImageIndex = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            final imageUrl = _hotelDetail!.hotelPhotos[index];
+                            return Hero(
+                              // Add Hero animation for smooth transition
+                              tag:
+                                  'hotelImage_${widget.hotelID}_$index', // Unique tag for each image
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  0,
+                                ), // No border radius for full width image
+                                child: Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          size: 60,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Image Indicator (dots)
+                    ],
+                  ),
                   // Hotel Name and Address Section
-                  Padding(
+                  Container(
                     padding: const EdgeInsets.all(16.0),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, -5),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _hotelDetail!.name, // Access properties directly
+                          _hotelDetail!.name,
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -117,100 +223,44 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                             const Icon(
                               Icons.location_on,
                               size: 20,
-                              color: Colors.grey,
+                              color: Color(0xFFB11204), // Red for icon
                             ),
                             const SizedBox(width: 5),
                             Expanded(
                               child: Text(
                                 "${_hotelDetail!.address}, ${_hotelDetail!.city}",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.grey,
+                                  color: Colors.grey[700],
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  // Image Carousel
-                  _hotelDetail!.hotelPhotos.isNotEmpty
-                      ? SizedBox(
-                          height: 250,
-                          child: PageView.builder(
-                            itemCount: _hotelDetail!.hotelPhotos.length,
-                            itemBuilder: (context, index) {
-                              final imageUrl = _hotelDetail!.hotelPhotos[index];
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: Image.network(
-                                    imageUrl,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.grey[300],
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.broken_image,
-                                            size: 60,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Container(
-                          height: 200,
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Text(
-                              'No images available',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                        ),
-                  const SizedBox(height: 20),
-
-                  // Details Grid Section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                        const SizedBox(height: 16),
+                        // Booking Details Section
                         const Text(
                           'Booking Details',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFFB11204), // Red for section title
                           ),
                         ),
-                        const Divider(),
+                        const Divider(color: Colors.grey),
                         _buildDetailRow(
                           Icons.calendar_today,
                           'Check-in Date:',
-                          _hotelDetail!.arrivalDate,
+                          DateFormat(
+                            'MMM dd, yyyy',
+                          ).format(DateTime.parse(_hotelDetail!.arrivalDate)),
                         ),
                         _buildDetailRow(
                           Icons.calendar_today,
                           'Check-out Date:',
-                          _hotelDetail!.departureDate,
-                        ),
-                        _buildDetailRow(
-                          Icons.attach_money,
-                          'Total Price:',
-                          '${_hotelDetail!.totalPrice.toStringAsFixed(2)} ${_hotelDetail!.currency}',
-                          isPrice: true,
+                          DateFormat(
+                            'MMM dd, yyyy',
+                          ).format(DateTime.parse(_hotelDetail!.departureDate)),
                         ),
                         _buildDetailRow(
                           Icons.star,
@@ -222,123 +272,145 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                           'Reviews:',
                           '${_hotelDetail!.reviewCount}',
                         ),
+                        const SizedBox(height: 16),
+
+                        // Description Section
+                        const Divider(color: Colors.grey),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+      bottomNavigationBar: _hotelDetail == null || _isLoading || _error != null
+          ? null // Hide bottom bar if no hotel details or loading/error
+          : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Total Price:',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      Text(
+                        '${_hotelDetail!.totalPrice.toStringAsFixed(2)} ${_hotelDetail!.currency}',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFB11204), // Red price
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 50, // Fixed height for the button
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final checkoutUri = Uri.parse(
+                          'http://10.0.2.2:3000/api/hotels/checkout',
+                        );
+                        try {
+                          final response = await http.post(
+                            checkoutUri,
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode({
+                              'hotel_id': widget.hotelID,
+                              'arrival_date': widget.arrivalDate,
+                              'departure_date': widget.departureDate,
+                            }),
+                          );
 
-                  // Book Now Button
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final checkoutUri = Uri.parse(
-                              'http://10.0.2.2:3000/api/hotels/checkout',
-                            );
-                            try {
-                              final response = await http.post(
-                                checkoutUri,
-                                headers: {'Content-Type': 'application/json'},
-                                body: jsonEncode({
-                                  'hotel_id': widget.hotelID,
-                                  'arrival_date': widget.arrivalDate,
-                                  'departure_date': widget.departureDate,
-                                }),
-                              );
-
-                              if (response.statusCode == 200) {
-                                // Show success dialog
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text(
-                                        'Booking Confirmed! 🎉',
-                                      ),
-                                      content: const Text(
-                                        'Your hotel booking has been successfully processed.',
-                                      ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(
-                                              context,
-                                            ).pop(); // Dismiss the dialog
-                                            Navigator.pushReplacement(
-                                              // Use pushReplacement to prevent going back to HotelDetailPage
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ItineraryPage(),
-                                              ),
-                                            );
-                                          },
-                                          child: const Text('Go to Itinerary'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Booking failed: ${response.statusCode} - ${response.body}',
-                                    ),
+                          if (response.statusCode == 200) {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Booking Confirmed! 🎉'),
+                                  content: const Text(
+                                    'Your hotel booking has been successfully processed.',
                                   ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const ItineraryPage(), // Ensure ItineraryPage is a const widget or remove const
+                                          ),
+                                        );
+                                      },
+                                      child: const Text(
+                                        'Go to Itinerary',
+                                        style: TextStyle(
+                                          color: Color(0xFFB11204),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 );
-                              }
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error during checkout: $e'),
+                              },
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Booking failed: ${response.statusCode} - ${response.body}',
                                 ),
-                              );
-                              print('Checkout error: $e');
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurpleAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error during checkout: $e'),
                             ),
-                            elevation: 5,
-                          ),
-                          child: const Text(
-                            "Book Now",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          );
+                          print('Checkout error: $e');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB11204), // Red button
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 5,
+                      ),
+                      child: const Text(
+                        "Book Now",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildInfoTile(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 14)),
-      ],
-    );
-  }
-
-  // New helper widget to build consistent detail rows (as was suggested before)
+  // Helper widget to build consistent detail rows
   Widget _buildDetailRow(
     IconData icon,
     String label,
@@ -346,12 +418,14 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     bool isPrice = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(
+        vertical: 8.0,
+      ), // More vertical spacing
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: Colors.deepPurple),
-          const SizedBox(width: 10),
+          Icon(icon, size: 22, color: const Color(0xFFB11204)), // Red icon
+          const SizedBox(width: 15),
           Text(
             label,
             style: const TextStyle(
@@ -361,12 +435,18 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
             ),
           ),
           const Spacer(),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: isPrice ? FontWeight.bold : FontWeight.normal,
-              color: isPrice ? Colors.green[700] : Colors.black,
+          Expanded(
+            // Use Expanded to prevent overflow for long values
+            child: Text(
+              value.toString(),
+              textAlign: TextAlign.right, // Align value to the right
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isPrice ? FontWeight.bold : FontWeight.normal,
+                color: isPrice
+                    ? const Color(0xFFB11204)
+                    : Colors.black, // Red for price
+              ),
             ),
           ),
         ],

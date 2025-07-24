@@ -18,6 +18,9 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
   bool _isLoading = true;
   String? _error;
 
+  // Define the new color
+  static const Color primaryRed = Color(0xFF780000); // Main theme color
+
   @override
   void initState() {
     super.initState();
@@ -73,12 +76,14 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
       appBar: AppBar(
         title: Text(_detail?.name ?? 'Attraction Details'),
         foregroundColor: Colors.white,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: primaryRed, // Changed color
         elevation: 0,
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple),
+              child: CircularProgressIndicator(
+                color: primaryRed,
+              ), // Changed color
             )
           : _error != null
           ? Center(
@@ -174,24 +179,66 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 8.0,
+                        // Redesigned Price, Rating, Reviews section
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildInfoChip(
-                              Icons.attach_money,
-                              'Price: \$${_detail!.price.toStringAsFixed(2)}',
-                              Colors.green[700]!,
+                            // Price
+                            Text(
+                              'Price: \$${_detail!.price.toStringAsFixed(2)} SGD',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors
+                                    .green
+                                    .shade700, // Kept green for price, but darker shade
+                              ),
                             ),
-                            _buildInfoChip(
-                              Icons.star,
-                              'Rating: ${_detail!.reviewStats.toStringAsFixed(1)}/5',
-                              Colors.amber[700]!,
+                            const SizedBox(
+                              height: 10,
+                            ), // Spacing between elements
+                            // Rating
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 20,
+                                  color: Colors
+                                      .amber
+                                      .shade700, // Darker amber for elegance
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${_detail!.reviewStats.toStringAsFixed(1)}/5',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors
+                                        .black87, // Neutral color for text
+                                  ),
+                                ),
+                              ],
                             ),
-                            _buildInfoChip(
-                              Icons.reviews,
-                              '${_detail!.reviewTotal} Reviews',
-                              Colors.blue[700]!,
+                            const SizedBox(height: 10), // Spacing
+                            // Reviews Total
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.reviews,
+                                  size: 20,
+                                  color: Colors
+                                      .grey[700], // Neutral grey for reviews icon
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${_detail!.reviewTotal} Reviews',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors
+                                        .grey[700], // Neutral grey for text
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -352,13 +399,12 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
                                                   .map(
                                                     (type) => Chip(
                                                       label: Text(type),
-                                                      backgroundColor:
-                                                          Colors.purple[50],
-                                                      labelStyle:
-                                                          const TextStyle(
-                                                            color: Colors
-                                                                .deepPurple,
-                                                          ),
+                                                      backgroundColor: Colors
+                                                          .grey[200], // Changed chip background
+                                                      labelStyle: TextStyle(
+                                                        color: Colors
+                                                            .grey[700], // Changed chip text color
+                                                      ),
                                                     ),
                                                   )
                                                   .toList(),
@@ -383,7 +429,8 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
           'Book Your Itinerary Now',
           style: TextStyle(fontSize: 18),
         ),
-        backgroundColor: Colors.deepOrangeAccent,
+        backgroundColor:
+            primaryRed, // Changed color from deepOrangeAccent to primaryRed
         foregroundColor: Colors.white,
         elevation: 5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -392,25 +439,6 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(color: color, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
+  // The _buildInfoChip widget was removed as its functionality is now implemented directly
+  // within the build method for a more custom and integrated layout of price, rating, and reviews.
 }

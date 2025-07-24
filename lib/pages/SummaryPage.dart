@@ -3,15 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:http/http.dart' as http;
 
-class AiChatPage extends StatefulWidget {
-  const AiChatPage({super.key});
+class SummaryAiChatPage extends StatefulWidget {
+  const SummaryAiChatPage({super.key});
 
   @override
-  State<AiChatPage> createState() => _AiChatPageState();
+  State<SummaryAiChatPage> createState() => _SummaryAiChatPageState();
 }
 
-class _AiChatPageState extends State<AiChatPage> {
+class _SummaryAiChatPageState extends State<SummaryAiChatPage> {
   late Future<List<String>> _futureAiMessages;
+
+  // Define the primary color based on the hex code #780000
+  final Color _primaryRed = const Color(0xFF780000);
 
   @override
   void initState() {
@@ -39,7 +42,14 @@ class _AiChatPageState extends State<AiChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Chat Messages')),
+      appBar: AppBar(
+        title: const Text(
+          'AI Chat Messages',
+          style: TextStyle(color: Colors.white), // White title for contrast
+        ),
+        backgroundColor: _primaryRed, // Use the deep red for the AppBar
+        iconTheme: const IconThemeData(color: Colors.white), // White back arrow
+      ),
       body: FutureBuilder<List<String>>(
         future: _futureAiMessages,
         builder: (context, snapshot) {
@@ -54,37 +64,84 @@ class _AiChatPageState extends State<AiChatPage> {
           final messages = snapshot.data!;
 
           return ListView.separated(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(
+              16,
+            ), // Increased padding for a softer look
             itemCount: messages.length,
-            separatorBuilder: (_, __) => const Divider(height: 24),
+            separatorBuilder: (_, __) =>
+                const SizedBox(height: 16), // Spacing between cards
             itemBuilder: (context, index) {
               final markdownText = messages[index];
 
               return Card(
-                elevation: 3,
+                elevation: 6, // Increased elevation for more depth
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(
+                    15,
+                  ), // More rounded corners
+                  side: BorderSide(
+                    color: _primaryRed.withOpacity(0.3),
+                    width: 1,
+                  ), // Subtle border
                 ),
+                margin: const EdgeInsets.symmetric(
+                  vertical: 8,
+                ), // Add vertical margin for cards
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(
+                    20,
+                  ), // Increased padding inside card
                   child: MarkdownBody(
                     data: markdownText,
                     styleSheet: MarkdownStyleSheet(
-                      h2: const TextStyle(
+                      // Customizing headers
+                      h1: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryRed, // Use primary red for H1
+                      ),
+                      h2: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
+                        color: _primaryRed, // Use primary red for H2
                       ),
-                      p: const TextStyle(fontSize: 16, height: 1.4),
+                      h3: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryRed.withOpacity(
+                          0.8,
+                        ), // Slightly lighter red for H3
+                      ),
+                      // Paragraph style
+                      p: const TextStyle(
+                        fontSize: 16,
+                        height: 1.6,
+                        color: Colors.black87,
+                      ), // Increased line height, slightly softer text color
+                      // Strong/bold text style
                       strong: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Colors.black, // Pure black for strong text
                       ),
-                      listBullet: const TextStyle(color: Colors.redAccent),
+                      // List bullet style
+                      listBullet: TextStyle(
+                        color: _primaryRed,
+                        fontSize: 18,
+                      ), // Larger, red bullets
+                      // Code block style
                       code: const TextStyle(
-                        backgroundColor: Color(0xFFF5F5F5),
+                        backgroundColor: Color(
+                          0xFFF0F0F0,
+                        ), // Lighter grey background
                         fontFamily: 'monospace',
                         fontSize: 14,
+                        color: Colors.black87,
+                        // REMOVED: borderRadius: BorderRadius.all(Radius.circular(4)), // This line caused the error
+                      ),
+                      // Link style
+                      a: TextStyle(
+                        color: _primaryRed,
+                        decoration: TextDecoration.underline,
                       ),
                     ),
                   ),
