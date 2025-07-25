@@ -14,7 +14,7 @@ class ManualPlanPage extends StatefulWidget {
 class _ManualPlanPageState extends State<ManualPlanPage> {
   List<Map<String, dynamic>> itineraryDetails = [];
   bool _isLoading = true;
-  String _errorMessage = '';
+  String? _errorMessage = '';
 
   // Define the new color constants
   static const Color primaryRed = Color(0xFF780000);
@@ -87,7 +87,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
   }
 
   // Fetches a single item (arrival, departure, hotel, or attraction) by type and ID
-  Future<Map<String, dynamic>?> _fetchItem(String type, String id) async {
+  Future<Map<String, dynamic>?> _fetchItem(String type, String? id) async {
     try {
       final res = await http.get(Uri.parse('$_baseUrl/api/$type/$id'));
       if (res.statusCode == 200) {
@@ -103,7 +103,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
   }
 
   // Helper to format date-time strings (e.g., 2025-07-25T03:10:00)
-  String _formatDateTime(String? dateTimeString) {
+  String _formatDateTime(String dateTimeString) {
     if (dateTimeString == null || dateTimeString.isEmpty) return 'N/A';
     try {
       final dateTime = DateTime.parse(dateTimeString);
@@ -116,7 +116,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
   }
 
   // Helper to format date strings (e.g., 2025-07-20)
-  String _formatDate(String? dateString) {
+  String _formatDate(String dateString) {
     if (dateString == null || dateString.isEmpty) return 'N/A';
     try {
       final date = DateTime.parse(dateString);
@@ -178,7 +178,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                 ],
               ),
             )
-          : _errorMessage.isNotEmpty
+          : _errorMessage!.isNotEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -192,7 +192,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      _errorMessage,
+                      _errorMessage!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: primaryRed, // Changed color
@@ -518,7 +518,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
   }
 
   // Reusable widget for detail texts with a bold label
-  Widget _buildDetailText(String label, String? value) {
+  Widget _buildDetailText(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
       child: Row(
@@ -534,7 +534,9 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
           ),
           Expanded(
             child: Text(
-              value ?? 'N/A', // Use 'N/A' if value is null
+              (value == null || value.isEmpty)
+                  ? 'No data found'
+                  : value, // Use 'N/A' if value is null
               style: const TextStyle(fontSize: 15, color: Colors.black87),
             ),
           ),
@@ -567,7 +569,9 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
           ),
           Expanded(
             child: Text(
-              value ?? 'N/A', // Use 'N/A' if value is null
+              (value == null || value.isEmpty)
+                  ? 'No data found'
+                  : value, // Use 'N/A' if value is null
               style: const TextStyle(fontSize: 14, color: Colors.black54),
               maxLines: maxLines,
               overflow: maxLines != null
