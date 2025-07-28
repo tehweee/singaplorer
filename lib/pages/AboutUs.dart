@@ -173,7 +173,17 @@ class _AboutUsPageState extends State<AboutUsPage> {
                           context,
                           title: 'Reason for making app',
                           content:
-                              'This app is a collaborative effort with the School of Business to create an intuitive and comprehensive platform for planning trips in Singapore, specifically designed from a foreigner\'s perspective to ease navigation and planning.',
+                              "We were united by 1 common problem. We HATED planning our travel plans.\n\n"
+                              "Our app is designed to help tourists experience the very best of Singapore smartly, seamlessly, and sustainably. "
+                              "Whether you're here for a weekend or a week, our AI-powered itinerary planner takes the work out of travel, "
+                              "curating personalized recommendations based on your interests, travel style, and pace.\n\n"
+                              "We go beyond the guidebook.\n\n"
+                              "Our app helps you explore Singapore’s green spaces on foot or by bike, connecting you to hidden gems, "
+                              "scenic trails, and lesser-known neighborhoods. It’s the perfect way to blend culture, nature, and convenience into your journey.\n\n"
+                              "And it doesn’t stop there. You’ll also get first-hand access to current events, local activities, and pop-up experiences happening "
+                              "across the island from festivals and exhibitions to street markets and community workshops.\n\n"
+                              "Singaplorer is for everyone! Whether you're a foodie, a nature lover, or an urban explorer, we’re here to help you make the most "
+                              "of your trip your way, the best way.",
                         ),
                         const SizedBox(height: 16.0),
                         _buildExpansionTile(
