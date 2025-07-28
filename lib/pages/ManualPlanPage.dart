@@ -43,6 +43,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
       if (res.statusCode == 200) {
         List<dynamic> plans = jsonDecode(res.body);
         List<Map<String, dynamic>> fetchedItineraries = [];
+        print(fetchedItineraries);
 
         for (var plan in plans) {
           final arrive = await _fetchItem('arrive', plan['arriveSGId']);
@@ -283,7 +284,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                               ),
                             ),
 
-                          _buildSectionHeader("Arrival", Icons.flight_land),
+                          _buildSectionHeader("Returning", Icons.flight_land),
                           if (item['arrive'] != null) ...[
                             _buildDetailText(
                               "From:",
@@ -316,7 +317,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                           const SizedBox(height: 20),
 
                           _buildSectionHeader(
-                            "Departure",
+                            "Originating",
                             Icons.flight_takeoff,
                           ),
                           if (item['depart'] != null) ...[

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'WelcomePage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -24,6 +25,73 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } else {
       throw Exception("Failed to load user data");
     }
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              _logoutFunction();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFAA0000),
+            ),
+            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _logoutFunction() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'http://10.0.2.2:3000/api/logout',
+        ), // Replace with your backend
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Navigate to homepage
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => WelcomePage()),
+          (route) => false,
+        );
+      } else {
+        _showErrorDialog(responseData['message'] ?? 'Login failed');
+      }
+    } catch (e) {
+      _showErrorDialog('An error occurred. Please try again.');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout Failed'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -86,7 +154,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     children: [
                       const Center(
                         child: Text(
-                          'Edit Profile',
+                          'Your Profile',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -111,6 +179,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ProfileField(
                         label: 'Travel Preference',
                         value: preferences,
+                      ),
+
+                      ElevatedButton(
+                        onPressed: _showLogoutDialog,
+                        child: Text("Log Out"),
                       ),
                     ],
                   ),

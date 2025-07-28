@@ -555,7 +555,7 @@ class _HomePageState extends State<HomePage> {
                 );
                 break;
               case 3:
-                _showLogoutDialog(); // or replace with Support later
+                null; // or replace with Support later
                 break;
             }
           },
@@ -753,31 +753,6 @@ class _HomePageState extends State<HomePage> {
         children: [
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
           Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFAA0000),
-            ),
-            child: const Text('Logout'),
-          ),
         ],
       ),
     );

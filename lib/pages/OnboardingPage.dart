@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'HomePage.dart';
+import 'dart:convert';
 import 'WelcomePage.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -11,6 +14,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _checkingLogin = true;
 
   final List<OnboardingData> _pages = [
     OnboardingData(
@@ -27,8 +31,62 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error Occured'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _autoLogin() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/api/autoLogin'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+          (route) => false,
+        );
+      } else {
+        // No token or no logged-in user, show onboarding UI
+        setState(() {
+          _checkingLogin = false;
+        });
+      }
+    } catch (e) {
+      print(e);
+      _showErrorDialog('An error occurred. Please wait.');
+      setState(() {
+        _checkingLogin = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _autoLogin();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_checkingLogin) {
+      // Show splash/loading while checking login
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
