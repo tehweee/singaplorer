@@ -307,13 +307,23 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                               _formatCurrency(item['arrive']['pricePerPax']),
                             ),
                           ] else
-                            const Text(
-                              "No arrival details available.",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "No arrival details available.",
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: null,
+                                  icon: Icon(Icons.add),
+                                ),
+                              ],
                             ),
+
                           const SizedBox(height: 20),
 
                           _buildSectionHeader(
@@ -342,12 +352,21 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                               _formatCurrency(item['depart']['pricePerPax']),
                             ),
                           ] else
-                            const Text(
-                              "No departure details available.",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "No departure details available.",
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: null,
+                                  icon: Icon(Icons.add),
+                                ),
+                              ],
                             ),
                           const SizedBox(height: 20),
 
@@ -384,16 +403,37 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                               item['hotel']['longitude'],
                             ),
                           ] else
-                            const Text(
-                              "No hotel details available.",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "No hotel details available.",
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: null,
+                                  icon: Icon(Icons.add),
+                                ),
+                              ],
                             ),
                           const SizedBox(height: 20),
 
-                          _buildSectionHeader("Attractions", Icons.attractions),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionHeader(
+                                "Attractions",
+                                Icons.attractions,
+                              ),
+                              IconButton(
+                                onPressed: null,
+                                icon: Icon(Icons.add),
+                              ),
+                            ],
+                          ),
                           if (item['attractions'] != null &&
                               item['attractions'].isNotEmpty)
                             ...item['attractions'].map<Widget>(
