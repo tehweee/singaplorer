@@ -43,7 +43,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               _logoutFunction();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFAA0000),
+              backgroundColor: const Color(0xFFB00020),
             ),
             child: const Text('Logout', style: TextStyle(color: Colors.white)),
           ),

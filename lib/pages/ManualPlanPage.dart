@@ -13,6 +13,7 @@ class ManualPlanPage extends StatefulWidget {
 
 class _ManualPlanPageState extends State<ManualPlanPage> {
   List<Map<String, dynamic>> itineraryDetails = [];
+  List<dynamic> itineraryIDs = [];
   bool _isLoading = true;
   String? _errorMessage = '';
 
@@ -42,10 +43,12 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
       final res = await http.get(Uri.parse('$_baseUrl/api/manualPlan'));
       if (res.statusCode == 200) {
         List<dynamic> plans = jsonDecode(res.body);
+        List<String> planIDs = [];
         List<Map<String, dynamic>> fetchedItineraries = [];
         print(fetchedItineraries);
 
         for (var plan in plans) {
+          planIDs.add(plan['_id']);
           final arrive = await _fetchItem('arrive', plan['arriveSGId']);
           final depart = await _fetchItem('depart', plan['departSGId']);
           final hotel = await _fetchItem('hotel', plan['hotelId']);
@@ -68,6 +71,7 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
         }
         setState(() {
           itineraryDetails = fetchedItineraries;
+          itineraryIDs = planIDs;
         });
       } else {
         setState(() {
@@ -157,6 +161,21 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
       print('Error formatting currency with NumberFormat: $e');
       return '\$${numericAmount.toStringAsFixed(2)}'; // Fallback using toStringAsFixed
     }
+  }
+
+  void _deleteItinerary(String id) async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+    try {
+      final res = await http.delete(Uri.parse('$_baseUrl/api/deletePlan/$id'));
+      if (res.statusCode == 200) {
+        setState(() {
+          _fetchPlans();
+        });
+      }
+    } catch (e) {}
   }
 
   @override
@@ -274,13 +293,24 @@ class _ManualPlanPageState extends State<ManualPlanPage> {
                           if (itineraryDetails.length > 1)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 15.0),
-                              child: Text(
-                                "Itinerary #${index + 1}",
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryRed, // Changed color
-                                ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Itinerary #${index + 1}",
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryRed, // Changed color
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () =>
+                                        _deleteItinerary(itineraryIDs[index]),
+                                    icon: Icon(Icons.delete, color: Colors.red),
+                                  ),
+                                ],
                               ),
                             ),
 

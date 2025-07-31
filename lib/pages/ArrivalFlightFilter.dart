@@ -219,7 +219,7 @@ class _ArrivalFilterPageState extends State<ArrivalFilterPage> {
                                       0xFFAA0000,
                                     ), // Selected date circle color
                                     onPrimary: Colors
-                                        .white, // Text color on selected date
+                                        .redAccent, // Text color on selected date
                                     onSurface: Colors
                                         .black87, // Text color for non-selected dates
                                     surface: Colors

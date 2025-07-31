@@ -19,7 +19,9 @@ class _ArrivalFlightPageState extends State<ArrivalFlightPage> {
   // Default values for initial search
   String _from = 'SIN.AIRPORT'; // Changi Airport
   String _to = 'LHR.AIRPORT'; // London Heathrow Airport
-  String _depart = '2025-07-25'; // Current date as per context
+  String _depart = DateFormat(
+    'yyyy-MM-dd',
+  ).format(DateTime.now()); // Current date as per context
   String _selectedCabin = 'ECONOMY';
   String _selectedSort = 'BEST';
   String _pax = '1';
