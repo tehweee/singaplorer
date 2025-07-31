@@ -423,7 +423,7 @@ class _ItineraryDetailPageState extends State<ItineraryDetailPage> {
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _goToBookingPage,
+        onPressed: _isLoading ? null : _goToBookingPage,
         icon: const Icon(Icons.confirmation_num_rounded),
         label: const Text(
           'Book Your Itinerary Now',
