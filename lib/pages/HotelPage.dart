@@ -19,7 +19,7 @@ class _HotelPageState extends State<HotelPage> {
   String _arrivalDate = '2025-07-20';
   String _departureDate = '2025-07-21';
   String _minPrice = '0';
-  String _maxPrice = '100';
+  String _maxPrice = '1000';
 
   @override
   void initState() {
