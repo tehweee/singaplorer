@@ -23,6 +23,8 @@ class _HotelPageState extends State<HotelPage> {
   ).format(DateTime.now().add(Duration(days: 5)));
   String _minPrice = '0';
   String _maxPrice = '5000';
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -51,6 +53,7 @@ class _HotelPageState extends State<HotelPage> {
 
         setState(() {
           _hotels = hotels.map((item) => Hotel.fromJson(item)).toList();
+          _isLoading = false;
         });
       } else {
         throw Exception('Failed to load hotels');
@@ -104,7 +107,19 @@ class _HotelPageState extends State<HotelPage> {
           },
         ),
       ),
-      body: _hotels.isEmpty
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFAA0000)),
+            ) // Red loading indicator
+          : _error != null
+          ? Center(
+              child: Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black54, fontSize: 16),
+              ),
+            )
+          : _hotels.isEmpty
           ? const Center(child: Text('No hotels found'))
           : ListView.builder(
               itemCount: _hotels.length,
