@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'HotelDetailPage.dart'; // Ensure this is correctly imported
 import '../models/HotelModel.dart'; // Ensure this file contains the Hotel model
+import 'package:intl/intl.dart';
 import 'HotelFilterPage.dart'; // Import the FilterPage
 
 class HotelPage extends StatefulWidget {
@@ -16,10 +17,12 @@ class _HotelPageState extends State<HotelPage> {
   List<Hotel> _hotels = [];
 
   // Default filter values
-  String _arrivalDate = '2025-07-20';
-  String _departureDate = '2025-07-21';
+  String _arrivalDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String _departureDate = DateFormat(
+    'yyyy-MM-dd',
+  ).format(DateTime.now().add(Duration(days: 5)));
   String _minPrice = '0';
-  String _maxPrice = '1000';
+  String _maxPrice = '5000';
 
   @override
   void initState() {

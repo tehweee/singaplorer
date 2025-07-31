@@ -4,7 +4,6 @@ import 'package:profile_test_isp/pages/ArrivalFlightPage.dart';
 import 'package:profile_test_isp/pages/HotelPage.dart';
 import 'package:profile_test_isp/pages/ItineraryPage.dart';
 import 'package:profile_test_isp/pages/ProfilePage.dart';
-import 'package:profile_test_isp/pages/StorePage.dart';
 import 'pages/LoadingPage.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
